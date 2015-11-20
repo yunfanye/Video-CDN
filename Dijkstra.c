@@ -50,9 +50,12 @@ int Dijkstra(int ** costs, int num, int src, int dest) {
 		next = next_tmp;
 	}
 	if(min_cost != INFINITY) {
+		printf("path: %d", dest);
 		while(route[dest] != -1) {
 			dest = route[dest];
+			printf("<-%d", route[dest]);
 		}
+		printf("\n");
 	}
 	free(route);
 	free(flag);
