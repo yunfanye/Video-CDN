@@ -2,6 +2,18 @@
 #define __MYDNS__
 
 #include <netdb.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdint.h>
+#include <time.h>
+
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <netinet/ip.h> 
+
+#include <arpa/inet.h>
+#include <string.h>
 
 #define MAX_BUFFER 8192
 
@@ -30,14 +42,14 @@ struct header{
 };
 
 struct question{
-	uint16_t QNAME;
+	char* QNAME;
 	uint16_t QTYPE;
 	uint16_t QCLASS;
 };
 
 // Shared by ANSWER, AUTHORITY and ADDITIONAL sections
 struct resource_record{
-	uint16_t NAME;
+	char* NAME;
 	uint16_t TYPE;
 	uint16_t CLASS;
 	uint16_t TTL;
