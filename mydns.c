@@ -82,6 +82,40 @@ void free_packet(struct packet* packet){
 	free(packet);
 }
 
+char* make_response_packet(char* input_buffer, char* dest_addr, int* response_length){
+	char* response = (char*)malloc(MAX_BUFFER);
+	int length = sizeof(struct header);
+	length += strlen((char*)(input_buffer+length))+1 + sizeof(uint16_t)*2;
+	memcpy(response, input_buffer, length);
+	((struct header*)response)->QR = 1;
+	((struct header*)response)->AA = 1;
+	((struct header*)response)->ANCOUNT = htons(1);
+	char* QNAME = (char*)(response+sizeof(struct header));
+	memcpy(response+length, QNAME, strlen(QNAME)+1);
+	length += strlen(QNAME)+1;
+	(struct resource_record*)(response+length)->TYPE = htons(1);
+	(struct resource_record*)(response+length)->CLASS = htons(1);
+	(struct resource_record*)(response+length)->TTL = 0;
+	(struct resource_record*)(response+length)->RDLENGTH = htons(4);
+	length += sizeof(struct resource_record);
+	struct sockaddr_in temp_addr;
+	inet_pton(AF_INET, dest_addr, &(temp_addr.sin_addr));
+	*((uint32_t*)(response+len)) = temp_addr.sin_addr.s_addr;
+	length += 4;
+	*response_length = length;
+	return response;
+}
+
+char* make_error_response_packet(char* input_buffer, int* response_length){
+	char* response = (char*)malloc(MAX_BUFFER);
+	int length = sizeof(struct header);
+	length += strlen((char*)(input_buffer+length))+1 + sizeof(uint16_t)*2;
+	memcpy(response, input_buffer, length);
+	((struct header*)response)->RCODE = htonl(3);
+	*response_length = length;
+	return response;
+}
+
 void serialize(struct packet* packet, char* data, int* length){
 	int offset = 0;
 	memcpy(data+offset,packet->header, sizeof(struct header));	
