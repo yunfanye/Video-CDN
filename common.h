@@ -3,5 +3,6 @@
 
 #define IP_ADDR_LEN						16
 #define MAX_CHUNK_NAME_LEN		4096
+#define SMALL_BUF_SIZE				4096
 
 #endif

@@ -2,7 +2,7 @@ CFLAGS = -Wall -g
 LDFLAGS = 
 CC = gcc
 objects = log.o mydns.o
-proxy_objects = time_util.o proxy_log.o rate_adapter.o conn_handler.o proxy.o
+proxy_objects = y.tab.o lex.yy.o time_util.o proxy_log.o rate_adapter.o conn_handler.o HTTP_handler.o proxy.o
 
 proxy: $(proxy_objects)
 		$(CC) $(CFLAGS) $^ -o $@
@@ -15,6 +15,12 @@ mydns: mydns.o
 
 log: log.o
 		$(CC) -o $@ $^ $(LDFLAGS)
+		
+lex.yy.c: lexer.l
+	flex $^
+
+y.tab.c: parser.y
+	yacc -d $^
 
 nameserver: nameserver.o
 		$(CC) -o $@ $^ $(LDFLAGS)

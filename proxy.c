@@ -15,6 +15,7 @@
 #include "rate_adapter.h"
 #include "time_util.h"
 #include "proxy_log.h"
+#include "HTTP_handler.h"
 
 #define MAX(x, y) ((x)>(y)?(x):(y))
 
@@ -98,6 +99,8 @@ int handle_conn(conn_wrap_t * node, fd_set readset, fd_set writeset) {
 	client_buf = node -> client_buf;
 	server_buf = node -> client_buf;
 
+	/* begin interact with client */
+	/* send video data to client */
 	if(FD_ISSET(client, &writeset) && server_len > 0) {
 		if ((writeret = mSend(client, server_buf, server_len)) != server_len) {
 			/* if some bytes have been sent */
@@ -120,12 +123,20 @@ int handle_conn(conn_wrap_t * node, fd_set readset, fd_set writeset) {
 			node -> server_buf_len = 0;
 		}
 	}
-	/* recv from client */
+	/* recv request from client */
 	if(FD_ISSET(client, &readset) && client_len < BUF_SIZE) {
 		readlen = BUF_SIZE - client_len;
 		if((readret = mRecv(client, client_buf + client_len, readlen)) > 0) {
 			client_len += readret;
-			node -> client_buf_len = client_len; 
+			node -> client_buf_len = client_len;
+			/* Process request */
+			extract_video_name(client_buf, &node -> client_buf_len, 
+				node -> chunk_name);
+			node -> bitrate = choose_bitrate(node -> server_ip, 
+				node -> chunk_name);
+			if(node -> bitrate == -1) {
+				/* get f4m */
+			}
 		}
 		else {
 			/* if interrupted, read next time; otherwise, release 
@@ -142,7 +153,8 @@ int handle_conn(conn_wrap_t * node, fd_set readset, fd_set writeset) {
 		return server_len == 1;
 	}
 
-	/* interact with web server */
+	/* begin interact with web server */
+	/* send request to web server */
 	if(FD_ISSET(server, &writeset) && client_len > 0) {
 		if ((writeret = mSend(server, client_buf, client_len)) != client_len) {
 			/* if some bytes have been sent */
@@ -165,6 +177,7 @@ int handle_conn(conn_wrap_t * node, fd_set readset, fd_set writeset) {
 			node -> client_buf_len = 0;
 		}
 	}
+	/* recv video data from web server */
 	if(FD_ISSET(server, &readset) && server_len < BUF_SIZE) {
 		readlen = BUF_SIZE - server_len;
 		if((readret = mRecv(server, server_buf + server_len, readlen)) > 0) {
