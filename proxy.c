@@ -27,6 +27,7 @@ void mHTTP_init(int http_port);
 int handle_conn(conn_wrap_t * node, fd_set readset, fd_set writeset);
 conn_wrap_t * add_linkedlist_node(conn_wrap_t * head, int client_fd);
 conn_wrap_t * accept_new_request(conn_wrap_t * head, int http_sock);
+conn_wrap_t * remove_linkedlist_node(conn_wrap_t * head, conn_wrap_t ** node);
 ssize_t mRecv(int sockfd, void * buf, size_t readlen);
 ssize_t mSend(int sockfd, const void * buf, size_t writelen);
 
@@ -74,6 +75,7 @@ int main(int argc, char* argv[]) {
 			while(loop_node != NULL) {
 				if(handle_conn(loop_node, readset, writeset) == 0) {
 					/* TODO: remove this conn */
+					head = remove_linkedlist_node(head, &loop_node);
 				}
 				loop_node = loop_node -> next;
 			}
@@ -119,7 +121,7 @@ int handle_conn(conn_wrap_t * node, fd_set readset, fd_set writeset) {
 			node -> server_buf_len = 0;
 		}
 	}
-
+	/* recv from client */
 	if(FD_ISSET(client, &readset) && client_len < BUF_SIZE) {
 		readlen = BUF_SIZE - client_len;
 		if((readret = mRecv(client, client_buf + client_len, readlen)) > 0) {
@@ -223,6 +225,8 @@ conn_wrap_t * add_linkedlist_node(conn_wrap_t * head, int client_fd) {
 	head -> all_data_received = false;
 	return head;
 }
+
+conn_wrap_t * remove_linkedlist_node(conn_wrap_t * head, conn_wrap_t * node)
 
 /* ./proxy <log> <alpha> <listen-port> <fake-ip>
  * <dns-ip> <dns-port> [<www-ip>] */

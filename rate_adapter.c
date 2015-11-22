@@ -18,6 +18,7 @@ unsigned * get_bitrate_list(const char * name) {
 	while(node !=  NULL) {
 		if(!strcmp(node -> name, name))
 			return node ->  bitrates;
+		node = node -> next;
 	}
 	/* TODO: not found, try to get f4m file */
 	return NULL;
@@ -37,11 +38,24 @@ void add_to_server_list(const char * server_ip) {
 	}
 }
 
+int set_server_bitrate(const char * server_ip, unsigned bitrate) {
+	server_list_t * node = server_list;
+	while(node !=  NULL) {
+		if(!strcmp(node -> server_ip, server_ip)) {
+			node -> bitrate = bitrate;
+			return 1;
+		}
+		node = node -> next;
+	}
+	return 0;
+}
+
 unsigned get_server_bitrate(const char * server_ip) {
 	server_list_t * node = server_list;
 	while(node !=  NULL) {
 		if(!strcmp(node -> server_ip, server_ip))
 			return node ->  bitrate;
+		node = node -> next;
 	}
 	/* not found, add server to list */
 	add_to_server_list(server_ip);
