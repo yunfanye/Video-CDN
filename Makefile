@@ -9,5 +9,11 @@ mydns: mydns.o
 log: log.o
 		$(CC) -o $@ $^ $(LDFLAGS)
 
+nameserver: nameserver.o
+		$(CC) -o $@ $^ $(LDFLAGS)
+
+load_balancing: load_balancing.o
+		$(CC) -o $@ $^ $(LDFLAGS)
+
 clean:
 	rm -f *.o

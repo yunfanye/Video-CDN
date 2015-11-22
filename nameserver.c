@@ -61,6 +61,7 @@ int main(int argc, char* argv[]) {
 		printf("Error bind udp\n");
 		exit(-1);
 	}
+	round_robin_count = 0;
 	parse_servers(servers);
 	if(round_robin==1){
 
