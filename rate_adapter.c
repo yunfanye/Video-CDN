@@ -62,11 +62,13 @@ unsigned get_server_bitrate(const char * server_ip) {
 	return 0;
 }
 
-unsigned choose_bitrate(const char * server_ip, const char * name) {
+int choose_bitrate(const char * server_ip, const char * name) {
 	int i;
 	unsigned * bitrates = get_bitrate_list(name); /* 0 terminates array */
 	unsigned now_bitrate = get_server_bitrate(server_ip);
 	unsigned result;
+	if(bitrates == NULL)
+		return -1;
 	/* by default choose lowest quality */
 	result = bitrates[0];
 	if(now_bitrate > 0 && result > 0) {
