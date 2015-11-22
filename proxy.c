@@ -73,11 +73,10 @@ int main(int argc, char* argv[]) {
 
 			loop_node = head;
 			while(loop_node != NULL) {
-				if(handle_conn(loop_node, readset, writeset) == 0) {
-					/* TODO: remove this conn */
+				if(handle_conn(loop_node, readset, writeset) == 0)
 					head = remove_linkedlist_node(head, &loop_node);
-				}
-				loop_node = loop_node -> next;
+				else
+					loop_node = loop_node -> next;
 			}
 		}
 	}
@@ -226,7 +225,26 @@ conn_wrap_t * add_linkedlist_node(conn_wrap_t * head, int client_fd) {
 	return head;
 }
 
-conn_wrap_t * remove_linkedlist_node(conn_wrap_t * head, conn_wrap_t * node)
+conn_wrap_t * remove_linkedlist_node(conn_wrap_t * head, 
+	conn_wrap_t ** node_ptr) 
+{
+	conn_wrap_t * saved_head = head;
+	conn_wrap_t * node = *node_ptr;
+	if(head == node) {
+		head = head -> next;
+		free(node);
+		*node_ptr = head;
+		return head;
+	}
+	else {
+		while(head != NULL && head -> next != node)
+			head = head -> next;
+		head -> next = node -> next;
+		free(node);
+		*node_ptr = head -> next; 
+		return saved_head;
+	}
+}
 
 /* ./proxy <log> <alpha> <listen-port> <fake-ip>
  * <dns-ip> <dns-port> [<www-ip>] */
