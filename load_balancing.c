@@ -1,7 +1,5 @@
 #include "load_balancing.h"
 
-
-
 // return -1 if error encountered
 int parse_server_file(char* filename){
 	FILE *f;
@@ -12,14 +10,14 @@ int parse_server_file(char* filename){
 	char buffer[MAX_BUFFER];
 	while(fgets(buffer, MAX_BUFFER, f)){
 		buffer[strlen(buffer)-1] = '\0';
-		struct node* p_node = add_node(buffer, nodes);
+		struct node* p_node = add_node(buffer, &nodes);
 		add_node_list(&servers, p_node);
 	}
 	fclose(f);
 	return 1;
 }
 
-int parse_LSAs_file(char *filename) {
+int parse_LSAs_file(char *filename){
 	FILE *f;
 	f = fopen(filename, "r");
 	if(!f){
@@ -31,19 +29,20 @@ int parse_LSAs_file(char *filename) {
 	char neighbors[MAX_BUFFER];
 	while(fgets(buffer, MAX_BUFFER, f)){
 		sscanf(buffer, "%s %d %s", sender, &seq_num, neighbors);
-		struct node* node_p = add_node(sender, nodes);
+		// printf("%s, %d, %s\n", sender, seq_num, neighbors);
+		struct node* node_p = add_node(sender, &nodes);
 		if(exist_in_list(servers, node_p)<0){
-			if(strncmp(node_p->name, "router", strlen("router"))==0 || strlen(node_p->name)<strlen("router")){
-				add_node_list(clients, node_p);
+			if(strncmp(node_p->name, "router", strlen("router"))!=0 || strlen(node_p->name)<strlen("router")){
+				add_node_list(&clients, node_p);
 			}
 		}
 		if(node_p->seq_num<seq_num){
 			node_p->seq_num = seq_num;
 			free(node_p->neighbors);
 			node_p->neighbors = NULL;
-			neighbor = strtok(neighbors, ",");
-			while(neighbor) {
-				struct node* p_neighbor = add_node(neighbor, nodes);
+			char* neighbor = strtok(neighbors, ",");
+			while(neighbor){
+				struct node* p_neighbor = add_node(neighbor, &nodes);
 				add_node_list(&(node_p->neighbors), p_neighbor);
 				neighbor = strtok(NULL, ",");
 			}
@@ -53,6 +52,14 @@ int parse_LSAs_file(char *filename) {
 	return 1;
 }
 
+void build_routing_table(int round_robin){
+	struct node_pointer* client = clients;
+	while(client){
+		nearest_server(client->p_node);
+		client = client->next;
+	}
+}
+
 // find best server and return ip address
 char* best_server(char* client, int round_robin){
 	char* return_str = NULL;
@@ -60,13 +67,13 @@ char* best_server(char* client, int round_robin){
 		// find node by round_robin
 		// count nodes length
 		int total_count = 0;
-		struct node* temp = nodes;
+		struct node_pointer* temp = servers;
 		while(temp){
 			total_count++;
 			temp = temp->next;
 		}
 		int index = round_robin_count%total_count;
-		struct node* temp = nodes;
+		temp = servers;
 		int count = 0;
 		while(temp){
 			if(count==index){
@@ -76,17 +83,24 @@ char* best_server(char* client, int round_robin){
 			temp = temp->next;
 		}
 		round_robin_count++;
-		return_str = temp->name;
+		return_str = temp->p_node->name;
 	}
 	else{
-		// TODO
-		return_str = node->name;
+		struct routing_table_entry* rte = routing_table;
+		return_str = NULL;
+		while(rte){
+			if(strcmp(rte->client->name, client)==0){
+				return_str = rte->server->name;
+				break;
+			}
+			rte = rte->next;
+		}
 	}
 	return return_str;
 }
 
-struct node* add_node(char* name, struct node* list) {
-	struct node* temp = list;
+struct node* add_node(char* name, struct node** list){
+	struct node* temp = *list;
 	while(temp){
 		if(strcmp(temp->name, name)==0){
 			break;
@@ -98,9 +112,9 @@ struct node* add_node(char* name, struct node* list) {
 		strcpy(temp->name, name);
 		temp->seq_num = -1;
 		temp->neighbors = NULL;
-		temp->next = list;
+		temp->next = *list;
 		temp->visited = -1;
-		list = temp;
+		*list = temp;
 	}
 	return temp;
 }
@@ -146,26 +160,27 @@ void nearest_server(struct node* client){
 	client->visited = 1;
 
 	struct node_pointer* queue = NULL;
-	push_back(queue, client);
+	push_back(&queue, client);
 	int flag = 1;
+	struct node_pointer* temp_np = NULL;
 	while(flag==1){
-		struct node* current_node = pop_front(queue);
-		struct node_pointer* temp = current_node->neighbors;
-		while(temp){
-			if(temp->p_node->visited==0){
-				if(exist_in_list(servers, temp->p_node)>0){
+		struct node* current_node = pop_front(&queue);
+		temp_np = current_node->neighbors;
+		while(temp_np){
+			if(temp_np->p_node->visited==0){
+				if(exist_in_list(servers, temp_np->p_node)>0){
 					flag = 0;
 					break;
 				}
 				else{
-					push_back(queue, temp->p_node);
+					push_back(&queue, temp_np->p_node);
 				}
 			}
-			temp->p_node->visited = 1;
-			temp = temp->next;
+			temp_np->p_node->visited = 1;
+			temp_np = temp_np->next;
 		}
 	}
-	if(temp==NULL){
+	if(temp_np==NULL){
 		printf("Faital Error, not found server\n");
 		exit(-1);
 	}
@@ -173,12 +188,12 @@ void nearest_server(struct node* client){
 	rte->next = routing_table;
 	routing_table = rte;
 	rte->client = client;
-	rte->server = temp->p_node;
+	rte->server = temp_np->p_node;
 }
 
 struct node* pop_front(struct node_pointer** queue){
 	struct node_pointer* queue_head = *queue;
-	struct node_pointer* return_p = NULL;
+	struct node* return_p = NULL;
 	if(queue_head==NULL){
 		return NULL;
 	}
@@ -194,7 +209,8 @@ struct node* pop_front(struct node_pointer** queue){
 	}
 	return return_p;
 }
-void node_pointer* push_back(struct node_pointer** queue, struct node* node){
+
+void push_back(struct node_pointer** queue, struct node* node){
 	struct node_pointer* queue_head = *queue;
 	if(queue_head==NULL){
 		*queue = (struct node_pointer*)malloc(sizeof(struct node_pointer));
@@ -217,3 +233,63 @@ void node_pointer* push_back(struct node_pointer** queue, struct node* node){
 	temp->next->next = NULL;
 	return;
 }
+
+void print_routing_table(){
+	struct routing_table_entry* temp = routing_table;
+	while(temp){
+		printf("rte: client: %s, server: %s\n", temp->client->name, temp->server->name);
+		temp = temp->next;
+	}
+}
+
+void print_servers_clients(){
+	printf("Clients:\n");
+	struct node_pointer* client = clients;
+	while(client){
+		printf("client: %s\n", client->p_node->name);
+		client = client->next;
+	}
+	printf("Servers:\n");
+	struct node_pointer* server = servers;
+	while(server){
+		printf("server: %s\n", server->p_node->name);
+		server = server->next;
+	}
+}
+
+void print_topo(){
+	struct node* current_node = nodes;
+	while(current_node){
+		printf("Current node: %s\n", current_node->name);
+		struct node_pointer* np = current_node->neighbors;
+		while(np){
+			printf("neighbor: %s\n", np->p_node->name);
+			np = np->next;
+		}
+		printf("\n");
+		current_node = current_node->next;
+	}
+}
+
+// int main(int argc, char** argv){
+// 	if(argc<2){
+// 		printf("need more args!\n");
+// 		return -1;
+// 	}
+// 	// printf("strlen: %lu\n", strlen("router"));
+// 	round_robin_count = 0;
+// 	parse_server_file(argv[1]);
+// 	parse_LSAs_file(argv[2]);
+// 	print_topo();
+// 	print_servers_clients();
+// 	int round_robin = 1;
+// 	build_routing_table(round_robin);
+// 	print_routing_table();
+// 	printf("route: 1.0.0.1  --->  %s\n", best_server("1.0.0.1", round_robin));
+// 	printf("route: 2.0.0.1  --->  %s\n", best_server("2.0.0.1", round_robin));
+// 	printf("route: 3.0.0.1  --->  %s\n", best_server("3.0.0.1", round_robin));
+// 	printf("route: 1.0.0.1  --->  %s\n", best_server("1.0.0.1", round_robin));
+// 	printf("route: 2.0.0.1  --->  %s\n", best_server("2.0.0.1", round_robin));
+// 	printf("route: 3.0.0.1  --->  %s\n", best_server("3.0.0.1", round_robin));
+// 	return 1;
+// }

@@ -14,54 +14,12 @@
 
 #include <arpa/inet.h>
 #include <string.h>
-
-#define MAX_BUFFER 8192
+#include "util.h"
 
 // Global variables used by DNS servers
 int dns_socket;
 struct sockaddr_in dns_server_addr;
 
-// Helper strcuts
-struct header{
-	uint16_t ID;
-
-	uint16_t QR:1;
-	uint16_t Opcode:4;
-	uint16_t AA:1;
-	uint16_t TC:1;
-	uint16_t RD:1;
-	uint16_t RA:1;
-	uint16_t Z:3;
-	uint16_t RCODE:4;
-
-	uint16_t QDCOUNT;
-	uint16_t ANCOUNT;
-	uint16_t NSCOUNT;
-	uint16_t ARCOUNT;
-	
-};
-
-struct question{
-	char* QNAME;
-	uint16_t QTYPE;
-	uint16_t QCLASS;
-};
-
-// Shared by ANSWER, AUTHORITY and ADDITIONAL sections
-struct resource_record{
-	char* NAME;
-	uint16_t TYPE;
-	uint16_t CLASS;
-	uint16_t TTL;
-	uint16_t RDLENGTH;
-	uint16_t RDATA;
-};
-
-struct packet{
-	struct header* header;
-	struct question* question;
-	struct resource_record* resource_record;
-};
 
 /**
  * Initialize your client DNS library with the IP address and port number of
@@ -99,7 +57,7 @@ int init_mydns(const char *dns_ip, unsigned int dns_port);
  * @return 0 on success, -1 otherwise
  */
 
-int resolve(const char *node, const char *service, 
-            const struct addrinfo *hints, struct addrinfo **res);
+int resolve(const char *node, const char *service, const struct addrinfo *hints, struct addrinfo **res);
+
 
 #endif
