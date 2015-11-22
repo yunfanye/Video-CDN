@@ -7,6 +7,7 @@ void log_error(char * error_msg);
 void log_msg(const char * format, ...);
 
 void log_parameters(unsigned long time, float duration, unsigned now_put,
-	unsigned ave_put, unsigned bitrate, char * server_ip, char * chunkname);
+	unsigned ave_put, unsigned bitrate, const char * server_ip, 
+	const char * chunkname);
 
 #endif

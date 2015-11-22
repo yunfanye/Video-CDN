@@ -1,13 +1,22 @@
-
-
+#include <errno.h>
+#include <netinet/in.h>
+#include <netinet/ip.h>
+#include <sys/select.h>
+#include <sys/socket.h>
+#include <sys/time.h>
+#include <sys/types.h> 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 #include "mydns.h"
 #include "conn_handler.h"
 #include "proxy.h"
 #include "rate_adapter.h"
 #include "time_util.h"
+#include "proxy_log.h"
+
+#define MAX(x, y) ((x)>(y)?(x):(y))
 
 /* global variables */
 static int http_sock;
@@ -16,7 +25,7 @@ static int http_sock;
 int parse_command_line(int argc, char * argv[]);
 void mHTTP_init(int http_port);
 int handle_conn(conn_wrap_t * node, fd_set readset, fd_set writeset);
-int add_linkedlist_node(conn_wrap_t * head, int client_fd);
+conn_wrap_t * add_linkedlist_node(conn_wrap_t * head, int client_fd);
 conn_wrap_t * accept_new_request(conn_wrap_t * head, int http_sock);
 ssize_t mRecv(int sockfd, void * buf, size_t readlen);
 ssize_t mSend(int sockfd, const void * buf, size_t writelen);
@@ -43,20 +52,19 @@ int main(int argc, char* argv[]) {
 		loop_node = head;
 		while(loop_node != NULL) {
 			if(loop_node -> server_buf_len > 0)
-				FD_SET(client, writeset);
+				FD_SET(loop_node -> client_fd, &writeset);
 			if(loop_node -> client_buf_len > 0)
-				FD_SET(server, writeset);
+				FD_SET(loop_node -> server_fd, &writeset);
 			if(loop_node -> client_buf_len < BUF_SIZE)
-				FD_SET(client, readset);
+				FD_SET(loop_node -> client_fd, &readset);
 			if(loop_node -> server_buf_len < BUF_SIZE)
-				FD_SET(server, readset);
+				FD_SET(loop_node -> server_fd, &readset);
 			nfds = MAX(nfds, loop_node -> client_fd);
 			nfds = MAX(nfds, loop_node -> server_fd);
 			loop_node = loop_node -> next;
 		} 
 
-		if((selectRet = select(nfds, &readset, &writeset, NULL, 
-			&timeout)) >= 0) {
+		if(select(nfds, &readset, &writeset, NULL, &timeout) >= 0) {
 
 			if(FD_ISSET(http_sock, &readset)) {
 				head = accept_new_request(head, http_sock);
@@ -89,7 +97,7 @@ int handle_conn(conn_wrap_t * node, fd_set readset, fd_set writeset) {
 	client_buf = node -> client_buf;
 	server_buf = node -> client_buf;
 
-	if(FD_ISSET(client, writeset) && server_len > 0) {
+	if(FD_ISSET(client, &writeset) && server_len > 0) {
 		if ((writeret = mSend(client, server_buf, server_len)) != server_len) {
 			/* if some bytes have been sent */
 			if(writeret != -1) {
@@ -112,7 +120,7 @@ int handle_conn(conn_wrap_t * node, fd_set readset, fd_set writeset) {
 		}
 	}
 
-	if(FD_ISSET(client, readset) && client_len < BUF_SIZE) {
+	if(FD_ISSET(client, &readset) && client_len < BUF_SIZE) {
 		readlen = BUF_SIZE - client_len;
 		if((readret = mRecv(client, client_buf + client_len, readlen)) > 0) {
 			client_len += readret;
@@ -127,14 +135,14 @@ int handle_conn(conn_wrap_t * node, fd_set readset, fd_set writeset) {
 		}
 	}
 
-	if(all_data_received) {
+	if(node -> all_data_received) {
 		/* tell client no more data */
 		shutdown(client, SHUT_WR);
 		return server_len == 1;
 	}
 
 	/* interact with web server */
-	if(FD_ISSET(server, writeset) && client_len > 0) {
+	if(FD_ISSET(server, &writeset) && client_len > 0) {
 		if ((writeret = mSend(server, client_buf, client_len)) != client_len) {
 			/* if some bytes have been sent */
 			if(writeret != -1) {
@@ -156,12 +164,12 @@ int handle_conn(conn_wrap_t * node, fd_set readset, fd_set writeset) {
 			node -> client_buf_len = 0;
 		}
 	}
-	if(FD_ISSET(server, readset) && server_len < BUF_SIZE) {
+	if(FD_ISSET(server, &readset) && server_len < BUF_SIZE) {
 		readlen = BUF_SIZE - server_len;
 		if((readret = mRecv(server, server_buf + server_len, readlen)) > 0) {
 			server_len += readret;
 			node -> server_buf_len = server_len;
-			head -> trasmitted_size += readret;
+			node -> trasmitted_size += readret;
 		}
 		else {
 			/* if interrupted, read next time; otherwise, release 
@@ -169,9 +177,9 @@ int handle_conn(conn_wrap_t * node, fd_set readset, fd_set writeset) {
 			 * the connection, close the socket */
 			if(readret == 0) {
 				/* finish */
-				all_data_received = true;
+				node -> all_data_received = true;
 				estimate_tp(node -> start_time, node -> trasmitted_size, 
-					node -> server_ip, node -> chunk_name);
+					node -> bitrate, node -> server_ip, node -> chunk_name);
 			}
 			else if(readret == -1 && errno != EINTR)
 				return 0;
@@ -196,7 +204,7 @@ conn_wrap_t * accept_new_request(conn_wrap_t * head, int http_sock) {
 	return head;
 }
 
-int add_linkedlist_node(conn_wrap_t * head, int client_fd) {				
+conn_wrap_t * add_linkedlist_node(conn_wrap_t * head, int client_fd) {				
 	conn_wrap_t * tmp;
 	if(!head) {															
 		head = malloc(sizeof(conn_wrap_t));							
@@ -213,7 +221,6 @@ int add_linkedlist_node(conn_wrap_t * head, int client_fd) {
 	head -> server_buf_len = 0;
 	head -> trasmitted_size = 0;
 	head -> all_data_received = false;
-	head -> bitrate = choose_bitrate(head -> server_ip);
 	return head;
 }
 
@@ -249,7 +256,7 @@ int parse_command_line(int argc, char * argv[]) {
 void mHTTP_init(int http_port) {
 	struct sockaddr_in http_addr;
     /* Create HTTP socket */
-    if ((http_sock = socket(PF_INET, SOCK_STREAM, 0)) == -1)
+    if ((http_sock = socket(AF_INET, SOCK_STREAM, 0)) == -1)
         log_error("Failed creating HTTP socket.");	
 	/* bind socket */
     http_addr.sin_family = AF_INET;
@@ -274,7 +281,7 @@ ssize_t mRecv(int sockfd, void * buf, size_t readlen) {
 ssize_t mSend(int sockfd, const void * buf, size_t writelen) {
 	int writeret;
 	if((writeret = send(sockfd, buf, writelen, 0)) < 0) {
-		error_log("Send error!\n");
+		log_error("Send error!\n");
 	}
 	return writeret;
 }
