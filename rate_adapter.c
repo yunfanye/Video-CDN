@@ -1,6 +1,8 @@
+#include "common.h"
 #include "time_util.h"
 #include "rate_adapter.h"
 #include "proxy_log.h"
+#include "name_util.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -13,14 +15,36 @@ static server_list_t * server_list;
 
 static bitrate_list_t * bitrate_list;
 
+int set_bitrate_list(const char * chunk_name, unsigned * list) {
+	char name[SMALL_BUF_SIZE];
+	bitrate_list_t * node = bitrate_list;
+	get_videoname_from_chunkname(chunk_name, name);
+	while(node -> next !=  NULL) {
+		if(!strcmp(node -> name, name))
+			return 1;
+		node = node -> next;
+	}
+	if(!strcmp(node -> name, name))
+		return 1;
+	else {
+		node -> next = malloc(sizeof(bitrate_list_t));
+		node = node -> next;
+		node -> next = NULL;
+		strcpy(node -> name, name);
+		node -> bitrates = list; 
+		return 0;
+	}
+}
+
 unsigned * get_bitrate_list(const char * name) {
 	bitrate_list_t * node = bitrate_list;
+	get_videoname_from_chunkname(chunk_name, name);
 	while(node !=  NULL) {
 		if(!strcmp(node -> name, name))
 			return node ->  bitrates;
 		node = node -> next;
 	}
-	/* TODO: not found, try to get f4m file */
+	/* not found, try to get f4m file */
 	return NULL;
 }
 

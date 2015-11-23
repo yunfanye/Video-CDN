@@ -19,6 +19,7 @@
 #include "time_util.h"
 #include "proxy_log.h"
 #include "HTTP_handler.h"
+#include "f4m_parser.h"
 
 #define MAX(x, y) ((x)>(y)?(x):(y))
 
@@ -35,6 +36,7 @@ conn_wrap_t * remove_linkedlist_node(conn_wrap_t * head, conn_wrap_t ** node);
 ssize_t mRecv(int sockfd, void * buf, size_t readlen);
 ssize_t mSend(int sockfd, const void * buf, size_t writelen);
 
+server_conn_t * self_req_head;
 
 int main(int argc, char* argv[]) {
 	fd_set readset, writeset;
@@ -42,6 +44,7 @@ int main(int argc, char* argv[]) {
 	struct timeval timeout;
 	conn_wrap_t * head = NULL;
 	conn_wrap_t * loop_node;
+	unsigned * bitrates;
 	/* check and parse command line arguments */
 	if(argc < 7)
 		return EXIT_FAILURE;
@@ -79,6 +82,20 @@ int main(int argc, char* argv[]) {
 			while(loop_node != NULL) {
 				if(handle_conn(loop_node, readset, writeset) == 0)
 					head = remove_linkedlist_node(head, &loop_node);
+				else
+					loop_node = loop_node -> next;
+			}
+
+			/* self initialized req to get f4m */
+			loop_node = self_req_head;
+			while(loop_node != NULL) {
+				/* TODO */
+				if(loop_node -> all_data_received) {
+					bitrates = extract_bitrate_list(loop_node -> server_buf,
+						loop_node -> server_buf_len);
+					set_bitrate_list(loop_node -> chunk_name, bitrates);
+					head = remove_linkedlist_node(head, &loop_node);
+				}
 				else
 					loop_node = loop_node -> next;
 			}
@@ -141,8 +158,8 @@ int handle_conn(conn_wrap_t * node, fd_set readset, fd_set writeset) {
 				node -> bitrate = choose_bitrate(node -> server_ip, 
 					node -> chunk_name);
 			if(node -> bitrate == -1) {
-				/* get f4m */
-
+				/* TODO: get f4m */
+				generate_request(req_head, node -> chunk_name);				
 			}
 		}
 		else {

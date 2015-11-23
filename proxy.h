@@ -6,6 +6,7 @@
 
 #define BUF_SIZE 				40960
 
+/* proxy server pair */
 typedef struct conn_wrap {
 	int client_fd;
 	int server_fd;

@@ -15,6 +15,8 @@ typedef struct bitrate_list {
 	struct bitrate_list * next;
 } bitrate_list_t;
 
+int set_bitrate_list(unsigned * list);
+
 int choose_bitrate(const char * server_ip, const char * name);
 int adapter_init(double alpha);
 /* call after chunk is finished */
