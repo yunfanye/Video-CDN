@@ -10,8 +10,8 @@
 unsigned * extract_bitrate_list(char * buf, int size) {
 	
 	buf[size] = '\0';
-	
-	while(strcasestr()) {
+	int index = 0;
+	while(strcasestr(buf + index, "<meida") != NULL) {
 	
 	}
 }
