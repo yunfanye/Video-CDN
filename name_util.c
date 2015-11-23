@@ -1,5 +1,6 @@
 #include "name_util.h"
 
+<<<<<<< HEAD
 /* input: chunk_name "/path/to/video/xxxSegx-Fragx"
  * output video_name "video"
  * return val: 0 on failure, 1 on success

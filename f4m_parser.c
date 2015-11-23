@@ -33,9 +33,17 @@ struct bitrate* extract_bitrate_list(char* buf, int size){
 			cur = cur->next;
 		}
 	}
-	return bitrates;
-	// while(strcasestr()) {
-	
-	// }
 }
+// unsigned * extract_bitrate_list(char * buf, int size) {
+	
+// 	buf[size] = '\0';
+// 	int index = 0;
+// 	while(strcasestr(buf + index, "<meida") != NULL) {
+	
+// 	}
+// 	return bitrates;
+// 	// while(strcasestr()) {
+	
+// 	// }
+// }
 
