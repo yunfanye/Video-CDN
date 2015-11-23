@@ -87,7 +87,7 @@ int main(int argc, char* argv[]) {
 					loop_node = loop_node -> next;
 			}
 
-			/* self initialized req to get f4m */
+			/* self initiated req to get f4m */
 			loop_node = self_req_head;
 			while(loop_node != NULL) {
 				/* TODO request handling */
@@ -97,8 +97,10 @@ int main(int argc, char* argv[]) {
 					set_bitrate_list(loop_node -> chunk_name, bitrates);
 					head = remove_linkedlist_node(head, &loop_node);
 				}
-				else
+				else {
+					handle_conn(loop_node);
 					loop_node = loop_node -> next;
+				}
 			}
 		}
 	}
@@ -107,9 +109,17 @@ int main(int argc, char* argv[]) {
 }
 
 int generate_request(conn_wrap_t * head, const char * chunk_name) {
+	conn_wrap_t * node;
 	char name[SMALL_BUF_SIZE];
+	char buf[SMALL_BUF_SIZE];
 	get_videoname_from_chunkname(chunk_name, name);
-	/* TODO generate f4m request */
+	/* generate f4m request */
+	self_req_head = add_linkedlist_node(self_req_head, -1);
+	node = self_req_head;
+	snprintf(buf, SMALL_BUF_SIZE, "GET %s HTTP/1.1\r\nConnection: Close\r\n\r\n", name);
+	strcpy(node -> client_buf, buf);
+	node -> client_buf_len = strlen(buf);
+	return 1;
 }
 
 int handle_conn(conn_wrap_t * node, fd_set readset, fd_set writeset) {
@@ -128,7 +138,7 @@ int handle_conn(conn_wrap_t * node, fd_set readset, fd_set writeset) {
 
 	/* begin interact with client */
 	/* send video data to client */
-	if(FD_ISSET(client, &writeset) && server_len > 0) {
+	if(client != -1  && FD_ISSET(client, &writeset) && server_len > 0) {
 		if ((writeret = mSend(client, server_buf, server_len)) != server_len) {
 			/* if some bytes have been sent */
 			if(writeret != -1) {
@@ -151,7 +161,7 @@ int handle_conn(conn_wrap_t * node, fd_set readset, fd_set writeset) {
 		}
 	}
 	/* recv request from client */
-	if(FD_ISSET(client, &readset) && client_len < BUF_SIZE) {
+	if(client != -1 && FD_ISSET(client, &readset) && client_len < BUF_SIZE) {
 		readlen = BUF_SIZE - client_len;
 		if((readret = mRecv(client, client_buf + client_len, readlen)) > 0) {
 			client_len += readret;
@@ -194,10 +204,13 @@ int handle_conn(conn_wrap_t * node, fd_set readset, fd_set writeset) {
 				node -> chunk_name);
 			return 1;
 		}
-		/* process request and modify request before sending */
-		change_URI(node -> chunk_name, node -> bitrate);
-		process_clinet_request(client_buf, &node -> client_buf_len, 
-			node -> chunk_name);
+		if(client == -1) {
+			/* if it is client initiated request,
+			 * process request and modify request before sending */
+			change_URI(node -> chunk_name, node -> bitrate);
+			process_clinet_request(client_buf, &node -> client_buf_len, 
+				node -> chunk_name);
+		}
 
 		if ((writeret = mSend(server, client_buf, client_len)) != client_len) {
 			/* if some bytes have been sent */
@@ -237,6 +250,8 @@ int handle_conn(conn_wrap_t * node, fd_set readset, fd_set writeset) {
 				node -> all_data_received = true;
 				estimate_tp(node -> start_time, node -> trasmitted_size, 
 					node -> bitrate, node -> server_ip, node -> chunk_name);
+				close_socket(server);
+				node -> server_fd = -1;
 			}
 			else if(readret == -1 && errno != EINTR)
 				return 0;
@@ -273,6 +288,7 @@ conn_wrap_t * add_linkedlist_node(conn_wrap_t * head, int client_fd) {
 		head -> next = tmp;										
 	}																	
 	head -> client_fd = client_fd;
+	/* output server_ip */
 	head -> server_fd = proxy_conn_setup(head -> server_ip);
 	head -> client_buf_len = 0;
 	head -> server_buf_len = 0;
@@ -284,22 +300,26 @@ conn_wrap_t * add_linkedlist_node(conn_wrap_t * head, int client_fd) {
 conn_wrap_t * remove_linkedlist_node(conn_wrap_t * head, 
 	conn_wrap_t ** node_ptr) 
 {
-	conn_wrap_t * saved_head = head;
+	conn_wrap_t * returned_head = head;
 	conn_wrap_t * node = *node_ptr;
 	if(head == node) {
 		head = head -> next;
-		free(node);
 		*node_ptr = head;
-		return head;
+		returned_head = head;
 	}
 	else {
 		while(head != NULL && head -> next != node)
 			head = head -> next;
 		head -> next = node -> next;
-		free(node);
-		*node_ptr = head -> next; 
-		return saved_head;
+		*node_ptr = head -> next;		
 	}
+	/* close conns */
+	if(node -> client_fd != -1)
+		close_socket(node -> client_fd);
+	if(node -> server_fd != -1)
+		close_socket(node -> server_fd);
+	free(node);
+	return returned_head;
 }
 
 /* ./proxy <log> <alpha> <listen-port> <fake-ip>
@@ -362,4 +382,14 @@ ssize_t mSend(int sockfd, const void * buf, size_t writelen) {
 		log_error("Send error!\n");
 	}
 	return writeret;
+}
+
+int close_socket(int sock)
+{
+    if (close(sock))
+    {
+        log_error("Failed closing socket.\n");
+        return 1;
+    }
+    return 0;
 }
