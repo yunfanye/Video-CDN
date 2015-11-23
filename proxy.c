@@ -20,6 +20,7 @@
 #include "proxy_log.h"
 #include "HTTP_handler.h"
 #include "f4m_parser.h"
+#include "name_util.h"
 
 #define MAX(x, y) ((x)>(y)?(x):(y))
 
@@ -36,7 +37,7 @@ conn_wrap_t * remove_linkedlist_node(conn_wrap_t * head, conn_wrap_t ** node);
 ssize_t mRecv(int sockfd, void * buf, size_t readlen);
 ssize_t mSend(int sockfd, const void * buf, size_t writelen);
 
-server_conn_t * self_req_head;
+conn_wrap_t * self_req_head;
 
 int main(int argc, char* argv[]) {
 	fd_set readset, writeset;
@@ -89,7 +90,7 @@ int main(int argc, char* argv[]) {
 			/* self initialized req to get f4m */
 			loop_node = self_req_head;
 			while(loop_node != NULL) {
-				/* TODO */
+				/* TODO request handling */
 				if(loop_node -> all_data_received) {
 					bitrates = extract_bitrate_list(loop_node -> server_buf,
 						loop_node -> server_buf_len);
@@ -103,6 +104,12 @@ int main(int argc, char* argv[]) {
 	}
 	
 	return 0;
+}
+
+int generate_request(conn_wrap_t * head, const char * chunk_name) {
+	char name[SMALL_BUF_SIZE];
+	get_videoname_from_chunkname(chunk_name, name);
+	/* TODO generate f4m request */
 }
 
 int handle_conn(conn_wrap_t * node, fd_set readset, fd_set writeset) {
@@ -158,8 +165,9 @@ int handle_conn(conn_wrap_t * node, fd_set readset, fd_set writeset) {
 				node -> bitrate = choose_bitrate(node -> server_ip, 
 					node -> chunk_name);
 			if(node -> bitrate == -1) {
-				/* TODO: get f4m */
-				generate_request(req_head, node -> chunk_name);				
+				/* try to get f4m */
+				generate_request(self_req_head, node -> chunk_name);
+				return 1;			
 			}
 		}
 		else {
@@ -186,7 +194,7 @@ int handle_conn(conn_wrap_t * node, fd_set readset, fd_set writeset) {
 				node -> chunk_name);
 			return 1;
 		}
-
+		/* process request and modify request before sending */
 		change_URI(node -> chunk_name, node -> bitrate);
 		process_clinet_request(client_buf, &node -> client_buf_len, 
 			node -> chunk_name);

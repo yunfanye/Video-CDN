@@ -36,7 +36,8 @@ int set_bitrate_list(const char * chunk_name, unsigned * list) {
 	}
 }
 
-unsigned * get_bitrate_list(const char * name) {
+unsigned * get_bitrate_list(const char * chunk_name) {
+	char name[SMALL_BUF_SIZE];
 	bitrate_list_t * node = bitrate_list;
 	get_videoname_from_chunkname(chunk_name, name);
 	while(node !=  NULL) {
