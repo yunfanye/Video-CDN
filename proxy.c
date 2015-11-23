@@ -36,6 +36,7 @@ conn_wrap_t * accept_new_request(conn_wrap_t * head, int http_sock);
 conn_wrap_t * remove_linkedlist_node(conn_wrap_t * head, conn_wrap_t ** node);
 ssize_t mRecv(int sockfd, void * buf, size_t readlen);
 ssize_t mSend(int sockfd, const void * buf, size_t writelen);
+int close_socket(int sock);
 
 conn_wrap_t * self_req_head;
 
