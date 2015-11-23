@@ -1,3 +1,6 @@
+
+#define _GNU_SOURCE
+
 #include <errno.h>
 #include <netinet/in.h>
 #include <netinet/ip.h>
@@ -132,10 +135,14 @@ int handle_conn(conn_wrap_t * node, fd_set readset, fd_set writeset) {
 			/* Process request */
 			extract_video_name(client_buf, node -> client_buf_len, 
 				node -> chunk_name);
-			node -> bitrate = choose_bitrate(node -> server_ip, 
-				node -> chunk_name);
+			if(strcasestr(node -> chunk_name, ".f4m") != NULL)
+				node -> bitrate = 0;
+			else
+				node -> bitrate = choose_bitrate(node -> server_ip, 
+					node -> chunk_name);
 			if(node -> bitrate == -1) {
 				/* get f4m */
+
 			}
 		}
 		else {
@@ -156,6 +163,17 @@ int handle_conn(conn_wrap_t * node, fd_set readset, fd_set writeset) {
 	/* begin interact with web server */
 	/* send request to web server */
 	if(FD_ISSET(server, &writeset) && client_len > 0) {
+		/* block until f4m file is acquired */
+		if(node -> bitrate == -1) {
+			node -> bitrate = choose_bitrate(node -> server_ip, 
+				node -> chunk_name);
+			return 1;
+		}
+
+		change_URI(node -> chunk_name, node -> bitrate);
+		process_clinet_request(client_buf, &node -> client_buf_len, 
+			node -> chunk_name);
+
 		if ((writeret = mSend(server, client_buf, client_len)) != client_len) {
 			/* if some bytes have been sent */
 			if(writeret != -1) {

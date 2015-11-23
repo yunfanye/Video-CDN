@@ -23,8 +23,8 @@
 #define YPRINTF(...)
 #endif
 
-/* external reference by HTTP_handler, set these variables to pass
- * the string to HTTP_handler */
+/* external reference from requestHandler.c, set these variables to pass
+ * the string to requestHandler */
 char _token[SMALL_BUF_SIZE];
 char _text[SMALL_BUF_SIZE];
 

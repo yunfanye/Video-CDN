@@ -41,4 +41,4 @@ load_balancing: load_balancing.o
 		$(CC) -o $@ $^ $(LDFLAGS)
 
 clean:
-	rm -f *.o *~ *.gch
+	rm -f *.o *~ *.gch lex.yy.c y.tab.c y.tab.h
