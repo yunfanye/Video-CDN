@@ -130,7 +130,7 @@ int handle_conn(conn_wrap_t * node, fd_set readset, fd_set writeset) {
 			client_len += readret;
 			node -> client_buf_len = client_len;
 			/* Process request */
-			extract_video_name(client_buf, &node -> client_buf_len, 
+			extract_video_name(client_buf, node -> client_buf_len, 
 				node -> chunk_name);
 			node -> bitrate = choose_bitrate(node -> server_ip, 
 				node -> chunk_name);
