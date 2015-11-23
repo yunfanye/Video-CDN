@@ -1,3 +1,6 @@
+
+#define _GNU_SOURCE
+
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -7,6 +10,8 @@
 #include "HTTP_handler.h"
 #include "proxy_log.h"
 
+
+extern int yyparse (void);
 extern void set_parsing_buf(char *buf, size_t siz);
 extern char _token[SMALL_BUF_SIZE];
 extern char _text[SMALL_BUF_SIZE];
@@ -55,7 +60,7 @@ int extract_video_name(const char * request, int buf_size, char * out_buf) {
 }
 
 /* change old uri to new uri; add or change header to connection: close */
-int process_clinet_request(char * request, int * old_buf_size, 
+int process_clinet_request(char * request, unsigned int * old_buf_size,
 	const char * new_uri) 
 {
 	int buf_size = *old_buf_size;
@@ -132,4 +137,30 @@ int process_clinet_request(char * request, int * old_buf_size,
 		return 1;
 	}
 	return 0;
+}
+
+/* change request URI to /path/to/video/500Seg2-Frag3 */
+int change_URI(char * old_uri, int bitrate) {
+	char * target;
+	int str_len;
+	int index;
+	char buf[SMALL_BUF_SIZE];
+	/* if it is xxxx.f4m, change it to xxxx_nolist.f4m */
+	if((target = strcasestr(old_uri, ".f4m")) != NULL) {
+		strcpy(target, "_nolist.f4m");
+	}
+	else {
+		str_len = strlen(old_uri);
+		index = str_len - 1;
+		while(old_uri[index] != '/')
+			index--;
+		if((target = strcasestr(old_uri + index, "Seg")) == NULL) {
+			log_error("Cannot find seg!");
+			return 0;
+		}
+		old_uri[index] = '\0';
+		snprintf(buf, SMALL_BUF_SIZE, "%s/%d%s", old_uri, bitrate, target);
+		strcpy(old_uri, buf);
+	}
+	return 1;
 }
