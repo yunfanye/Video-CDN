@@ -91,7 +91,6 @@ int main(int argc, char* argv[]) {
 			/* self initiated req to get f4m */
 			loop_node = self_req_head;
 			while(loop_node != NULL) {
-				/* TODO request handling */
 				if(loop_node -> all_data_received) {
 					bitrates = extract_bitrate_list(loop_node -> server_buf,
 						loop_node -> server_buf_len);
@@ -117,6 +116,7 @@ int generate_request(conn_wrap_t * head, const char * chunk_name) {
 	/* generate f4m request */
 	self_req_head = add_linkedlist_node(self_req_head, -1);
 	node = self_req_head;
+	/* TODO: URI format */
 	snprintf(buf, SMALL_BUF_SIZE, "GET %s HTTP/1.1\r\nConnection: Close\r\n\r\n", name);
 	strcpy(node -> client_buf, buf);
 	node -> client_buf_len = strlen(buf);
