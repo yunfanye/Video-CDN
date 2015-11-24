@@ -47,6 +47,7 @@ int main(int argc, char* argv[]) {
 	conn_wrap_t * head = NULL;
 	conn_wrap_t * loop_node;
 	unsigned * bitrates;
+
 	/* check and parse command line arguments */
 	if(argc < 7)
 		return EXIT_FAILURE;

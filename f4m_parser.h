@@ -11,7 +11,7 @@ struct bitrate{
 	struct bitrate* next;
 };
 
-// unsigned * extract_bitrate_list(char * buf, int size);
-struct bitrate* extract_bitrate_list(char* buf, int size);
+unsigned * extract_bitrate_list(char * buf, int size);
+// struct bitrate* extract_bitrate_list(char* buf, int size);
 
 #endif
