@@ -45,9 +45,12 @@ int resolve(const char *node, const char *service, const struct addrinfo *hints,
 		free_packet(packet);
 		return -1;
 	}
-	parse_response(buffer, res, length);
+	int RCODE = parse_response(buffer, res, length);
 	((struct sockaddr_in*)(*res)->ai_addr)->sin_port = htons(atoi(service));
 	free_packet(packet);
+	if(RCODE!=0){
+		return -1;
+	}
 	return 0;
 }
 
@@ -67,6 +70,11 @@ int resolve(const char *node, const char *service, const struct addrinfo *hints,
 // 	int rc = resolve("video.cs.cmu.edu", "8080", NULL, &result);
 // 	struct sockaddr_in *ipv4 = (struct sockaddr_in*)result->ai_addr;
 // 	char ipAddress[INET_ADDRSTRLEN];
+// 	inet_ntop(AF_INET, &(ipv4->sin_addr), ipAddress, INET_ADDRSTRLEN);
+// 	printf("return code: %d, The IP address is: %s\n", rc, ipAddress);
+// 	freeaddrinfo(result);
+// 	rc = resolve("baidu.com", "8080", NULL, &result);
+// 	ipv4 = (struct sockaddr_in*)result->ai_addr;
 // 	inet_ntop(AF_INET, &(ipv4->sin_addr), ipAddress, INET_ADDRSTRLEN);
 // 	printf("return code: %d, The IP address is: %s\n", rc, ipAddress);
 // 	freeaddrinfo(result);

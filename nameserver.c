@@ -83,6 +83,7 @@ int main(int argc, char* argv[]) {
 			struct sockaddr_in from;
 			socklen_t from_length = sizeof(from);
 			char buffer[MAX_BUFFER];
+			memset(buffer, 0, MAX_BUFFER);
 			int ret = recvfrom(socket, buffer, MAX_BUFFER,0, (struct sockaddr*)&from, &from_length);
 			if(ret<0){
 				printf("Error recvfrom\n");
@@ -113,9 +114,10 @@ int main(int argc, char* argv[]) {
 				else{
 					printf("wrong dns\n");
 					// generate error response
-					int response_length;
+					int response_length = -1;
 					char* response = make_error_response_packet(buffer, &response_length);
 					sendto(socket, response, response_length, 0, (struct sockaddr *)&from, from_length);
+					print_serialized_packet(response);
 					free(response);
 				}
 			}
