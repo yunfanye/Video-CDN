@@ -64,6 +64,7 @@ int main(int argc, char* argv[]) {
 	build_routing_table(round_robin);
 	print_routing_table();
 	print_topo();
+	open_log_file(log_filename);
 
 	struct packet* temp_packet = make_query_packet("video.cs.cmu.edu");
 	int temp_length;
@@ -100,6 +101,7 @@ int main(int argc, char* argv[]) {
 						printf("find best server: %s\n", response_ip);
 						int response_length = -1;
 						char* response = make_response_packet(buffer, response_ip, &response_length);
+						dns_log(addr, "video.cs.cmu.edu", response_ip);
 						sendto(socket, response, response_length, 0, (struct sockaddr *)&from, from_length);
 						free(response);
 					}

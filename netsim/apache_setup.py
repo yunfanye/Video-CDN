@@ -21,6 +21,11 @@ APACHE_RHEL_CONF = '/etc/httpd/conf/httpd.conf'
 APACHE_RHEL_CONF_BAK = '/etc/httpd/conf/httpd.conf.bak'
 APACHE_RHEL_DOC_ROOT = '/var/www/html'
 
+APACHE_MAC = '/usr/sbin/apachectl'
+APACHE_MAC_CONF = '/etc/apache2/httpd.conf'
+APACHE_MAC_CONF_BAK = '/etc/apache2/httpd.conf.bak'
+APACHE_MAC_DOC_ROOT = '/var/www/html'
+
 APACHE_FEDORA = '/usr/local/apache2/bin/httpd'
 APACHE_FEDORA_CONF = '/usr/local/apache2/conf/httpd.conf'
 APACHE_FEDORA_CONF_BAK = '/usr/local/apache2/conf/httpd.conf.bak'
@@ -48,6 +53,8 @@ Listen %s:8080
 </VirtualHost>'''
 
 LINUX = platform.linux_distribution()[0]
+if len(LINUX) <= 1:
+    LINUX = "mac"
 
 def is_apache_configured_split_conf(ports):
     found = False
@@ -80,6 +87,8 @@ def is_apache_configured():
         return is_apache_configured_split_conf(APACHE_UBUNTU_PORTS)
     elif LINUX == 'Fedora':
         return is_apache_configured_single_conf(APACHE_FEDORA_CONF)
+    elif LINUX == 'mac':
+        return is_apache_configured_single_conf(APACHE_MAC_CONF)
     else:
         return is_apache_configured_single_conf(APACHE_RHEL_CONF)
 
@@ -151,6 +160,9 @@ def configure_apache(ip_list):
     elif LINUX == 'Fedora':
         configure_apache_single_conf(ip_list, APACHE_FEDORA_CONF,\
             APACHE_FEDORA_CONF_BAK, APACHE_FEDORA_DOC_ROOT)
+    elif LINUX == 'mac':
+        configure_apache_single_conf(ip_list, APACHE_MAC_CONF,\
+            APACHE_MAC_CONF_BAK, APACHE_MAC_DOC_ROOT)
     else:
         configure_apache_single_conf(ip_list, APACHE_RHEL_CONF,\
             APACHE_RHEL_CONF_BAK, APACHE_RHEL_DOC_ROOT)
@@ -209,6 +221,8 @@ def reset_apache(ip_list):
             APACHE_UBUNTU_SITES_AVAILABLE, APACHE_UBUNTU_SITES_ENABLED)
     elif LINUX == 'Fedora':
         reset_apache_single_conf(ip_list, APACHE_FEDORA_CONF, APACHE_FEDORA_CONF_BAK)
+    elif LINUX == 'mac':
+        reset_apache_single_conf(ip_list, APACHE_MAC_CONF, APACHE_MAC_CONF_BAK)
     else:
         reset_apache_single_conf(ip_list, APACHE_RHEL_CONF, APACHE_RHEL_CONF_BAK)
 
@@ -224,5 +238,7 @@ def restart_apache():
         restart_apache_script(APACHE_UBUNTU)
     elif LINUX == 'Fedora':
         restart_apache_binary(APACHE_FEDORA)
+    elif LINUX == 'mac':
+        restart_apache_binary(APACHE_MAC)
     else:
         restart_apache_binary(APACHE_RHEL)
