@@ -1,2 +1,12 @@
 *.o
 *.gch
+f4m_parser
+name_util
+nameserver
+load_balancing
+mydns
+log
+proxy
+lex.yy.c
+y.tab.c
+y.tab.h
