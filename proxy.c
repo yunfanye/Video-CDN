@@ -59,7 +59,7 @@ int main(int argc, char* argv[]) {
 		FD_ZERO(&writeset);
 		FD_SET(http_sock, &readset);   	
 		nfds = http_sock;
-
+		/* client request forwarding */
 		loop_node = head;
 		while(loop_node != NULL) {
 			if(loop_node -> server_buf_len > 0)
@@ -73,7 +73,17 @@ int main(int argc, char* argv[]) {
 			nfds = MAX(nfds, loop_node -> client_fd);
 			nfds = MAX(nfds, loop_node -> server_fd);
 			loop_node = loop_node -> next;
-		} 
+		}
+		/* self initiated requests */
+		loop_node = self_req_head;
+		while(loop_node != NULL) {
+			if(loop_node -> client_buf_len > 0)
+				FD_SET(loop_node -> server_fd, &writeset);
+			if(loop_node -> server_buf_len < BUF_SIZE)
+				FD_SET(loop_node -> server_fd, &readset);
+			nfds = MAX(nfds, loop_node -> server_fd);
+			loop_node = loop_node -> next;
+		}
 
 		if(select(nfds, &readset, &writeset, NULL, &timeout) >= 0) {
 
