@@ -97,6 +97,7 @@ int main(int argc, char* argv[]) {
 
 			loop_node = head;
 			while(loop_node != NULL) {
+				log_msg("handle client initiated request!\n");
 				if(handle_conn(loop_node, &readset, &writeset) == 0)
 					head = remove_linkedlist_node(head, &loop_node);
 				else
@@ -107,12 +108,16 @@ int main(int argc, char* argv[]) {
 			loop_node = self_req_head;
 			while(loop_node != NULL) {
 				if(loop_node -> all_data_received) {
+					loop_node -> server_buf[500] ='\0'; 
+					log_msg("f4m doc: %p, %d\ncontent: %s\n", 
+						loop_node -> server_buf, loop_node -> server_buf_len, loop_node -> server_buf + 8);
 					bitrates = extract_bitrate_list(loop_node -> server_buf,
 						loop_node -> server_buf_len);
 					set_bitrate_list(loop_node -> chunk_name, bitrates);
 					head = remove_linkedlist_node(head, &loop_node);
 				}
 				else {
+					log_msg("handle server initiated request!\n");
 					handle_conn(loop_node, &readset, &writeset);
 					loop_node = loop_node -> next;
 				}
@@ -132,7 +137,8 @@ int generate_request(conn_wrap_t * head, const char * chunk_name) {
 	self_req_head = add_linkedlist_node(self_req_head, -1);
 	node = self_req_head;
 	/* TODO: URI format */
-	snprintf(buf, SMALL_BUF_SIZE, "GET %s HTTP/1.1\r\nConnection: Close\r\n\r\n", name);
+	snprintf(buf, SMALL_BUF_SIZE, "GET /vod/big_buck_bunny.f4m HTTP/1.1\r\nConnection: Close\r\n\r\n");
+	log_msg("get f4m from web server\n%s", buf);
 	strcpy(node -> client_buf, buf);
 	node -> client_buf_len = strlen(buf);
 	return 1;
@@ -190,7 +196,10 @@ int handle_conn(conn_wrap_t * node, fd_set * readset, fd_set * writeset) {
 				node -> chunk_name);
 			log_msg("client request %s\n", node -> chunk_name);
 			if(strcasestr(node -> chunk_name, ".f4m") != NULL ||
-				strcasestr(node -> chunk_name, ".html") != NULL) 
+				strcasestr(node -> chunk_name, ".html") != NULL ||
+				strcasestr(node -> chunk_name, ".ico") != NULL ||
+				strcasestr(node -> chunk_name, ".swf") != NULL ||
+				strcasestr(node -> chunk_name, ".js") != NULL)
 			{
 				/* skip .f4m and .html */
 				node -> bitrate = 0;

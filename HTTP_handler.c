@@ -152,7 +152,11 @@ int change_URI(char * old_uri, int bitrate) {
 	if((target = strcasestr(old_uri, ".f4m")) != NULL) {
 		strcpy(target, "_nolist.f4m");
 	}
-	else if(strcasestr(old_uri, ".html") != NULL) {
+	else if(bitrate == 0 || strcasestr(old_uri, ".html") != NULL ||
+		strcasestr(old_uri, ".ico") != NULL ||
+		strcasestr(old_uri, ".swf") != NULL ||
+		strcasestr(old_uri, ".js") != NULL) 
+	{
 		return 1;
 	}
 	else {
