@@ -61,7 +61,7 @@ int server_conn(int clientfd, char * server_ip) {
 	else {
 
 		addr.sin_family = AF_INET;
-		addr.sin_port = 80;
+		addr.sin_port = htons(80);
 		addr.sin_addr.s_addr = www_ip_addr;
 		addrlen = sizeof(addr);
 		if (connect(clientfd, (struct sockaddr *) &addr, addrlen) != -1)
@@ -81,12 +81,14 @@ int clientfd_open() {
         log_error("Failed creating HTTP socket.");	
         return -1;
     }
-		/* bind socket */
+	/* bind socket */
     http_addr.sin_family = AF_INET;
     http_addr.sin_port = 0; /* choose random port */
     http_addr.sin_addr.s_addr = fake_ip_addr;
     /* servers bind sockets to ports---notify the OS they accept connections */
-    if (bind(http_sock, (struct sockaddr *) &http_addr, sizeof(http_addr)))
-    	log_error("Failed binding HTTP socket.");   
+    if (bind(http_sock, (struct sockaddr *) &http_addr, sizeof(http_addr)) < 0)
+    	log_error("Failed binding HTTP socket.");
+	char * ip_str = inet_ntoa(http_addr.sin_addr); /* statically allocated */
+	log_msg("bind to fake_ip: %s, sock %d\n", ip_str, http_sock);
     return http_sock;
 }

@@ -39,6 +39,9 @@ int extract_video_name(const char * request, int buf_size, char * out_buf) {
 				expected = '\r';
 				break;
 			case STATE_CRLF:
+				memcpy(work_buf, buf, index - 2);
+				work_buf[index - 1] = '\0';
+				log_msg("request line: %s\n", work_buf);
 				if(sscanf(work_buf, "%s %s %s", method, out_buf, prot) != 3)
 					return 0;
 				return 1;
@@ -98,7 +101,7 @@ int process_clinet_request(char * request, unsigned int * old_buf_size,
 					}
 				} else {
 					memcpy(work_buf, buf, index - 2);
-					work_buf[index + 1] = '\0';
+					work_buf[index - 1] = '\0';
 					if(sscanf(work_buf, "%s %s %s", method, old_uri, prot) != 3)
 						log_error("Parse request line error!");
 					/* change to new request line */
