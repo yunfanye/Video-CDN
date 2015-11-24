@@ -54,7 +54,7 @@ int server_conn(int clientfd) {
 	}
 	else {
 		addr.sin_family = AF_INET;
-		addr.sin_port = 8080;
+		addr.sin_port = 80;
 		addr.sin_addr.s_addr = www_ip_addr;
 		addrlen = sizeof(addr);
 		if (connect(clientfd, (struct sockaddr *) &addr, addrlen) != -1)
