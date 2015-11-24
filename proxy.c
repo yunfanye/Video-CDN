@@ -90,9 +90,9 @@ int main(int argc, char* argv[]) {
 		log_msg("start selecting! nfds: %d\n", nfds);
 		if(select(nfds, &readset, &writeset, NULL, &timeout) >= 0) {
 
-			if(FD_ISSET(http_sock, &readset)) {
-				log_msg("new request\n");
+			if(FD_ISSET(http_sock, &readset)) {			
 				head = accept_new_request(head, http_sock);
+				log_msg("new request, head: %p\n", head);
 			}
 
 			loop_node = head;
@@ -151,7 +151,7 @@ int handle_conn(conn_wrap_t * node, fd_set * readset, fd_set * writeset) {
 	server_len = node -> server_buf_len;
 	client_buf = node -> client_buf;
 	server_buf = node -> client_buf;
-	log_msg("handle_conn: server buf %d, client buf %d\n", server_len, client_len);
+	log_msg("handle_conn: node %p, server buf %d, client buf %d\n", node, server_len, client_len);
 	/* begin interact with client */
 	/* send video data to client */
 	if(client != -1  && FD_ISSET(client, writeset) && server_len > 0) {
@@ -182,14 +182,22 @@ int handle_conn(conn_wrap_t * node, fd_set * readset, fd_set * writeset) {
 		if((readret = mRecv(client, client_buf + client_len, readlen)) > 0) {
 			client_len += readret;
 			node -> client_buf_len = client_len;
+			log_msg("to extract URI\n");
 			/* Process request */
 			extract_video_name(client_buf, node -> client_buf_len, 
 				node -> chunk_name);
-			if(strcasestr(node -> chunk_name, ".f4m") != NULL)
+			log_msg("client request %s\n", node -> chunk_name);
+			if(strcasestr(node -> chunk_name, ".f4m") != NULL ||
+				strcasestr(node -> chunk_name, ".html") != NULL) 
+			{
+				/* skip .f4m and .html */
 				node -> bitrate = 0;
-			else
+			}
+			else {
 				node -> bitrate = choose_bitrate(node -> server_ip, 
 					node -> chunk_name);
+			}
+			log_msg("chose bitrate %d\n", node -> bitrate);
 			if(node -> bitrate == -1) {
 				/* try to get f4m */
 				generate_request(self_req_head, node -> chunk_name);
@@ -215,12 +223,13 @@ int handle_conn(conn_wrap_t * node, fd_set * readset, fd_set * writeset) {
 	/* send request to web server */
 	if(FD_ISSET(server, writeset) && client_len > 0) {
 		/* block until f4m file is acquired */
+		log_msg("Send request to web server\n");
 		if(node -> bitrate == -1) {
 			node -> bitrate = choose_bitrate(node -> server_ip, 
 				node -> chunk_name);
 			return 1;
 		}
-		if(client == -1) {
+		if(client != -1) {
 			/* if it is client initiated request,
 			 * process request and modify request before sending */
 			change_URI(node -> chunk_name, node -> bitrate);
@@ -306,6 +315,7 @@ conn_wrap_t * add_linkedlist_node(conn_wrap_t * head, int client_fd) {
 	head -> client_fd = client_fd;
 	/* output server_ip */
 	head -> server_fd = proxy_conn_setup(head -> server_ip);
+	log_msg("setup proxy outbound conn: %s\n", head -> server_ip);
 	head -> client_buf_len = 0;
 	head -> server_buf_len = 0;
 	head -> trasmitted_size = 0;
