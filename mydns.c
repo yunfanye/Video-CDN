@@ -45,32 +45,40 @@ int resolve(const char *node, const char *service, const struct addrinfo *hints,
 		free_packet(packet);
 		return -1;
 	}
-	parse_response(buffer, res, length);
+	int RCODE = parse_response(buffer, res, length);
 	((struct sockaddr_in*)(*res)->ai_addr)->sin_port = htons(atoi(service));
 	free_packet(packet);
+	if(RCODE!=0){
+		return -1;
+	}
 	return 0;
 }
 
-// // Test for some of the functions in mydns.c
-// int main(){
-// 	// printf("%d, %d\n", ntohl(3), ntohs(3));
-// 	struct packet* query_packet = make_query_packet("video.cs.cmu.edu");
-// 	print_packet(query_packet);
+// Test for some of the functions in mydns.c
+int main(){
+	// printf("%d, %d\n", ntohl(3), ntohs(3));
+	struct packet* query_packet = make_query_packet("video.cs.cmu.edu");
+	print_packet(query_packet);
 
-// 	char data[MAX_BUFFER];
-// 	int length;
-// 	serialize(query_packet, data, &length);
+	char data[MAX_BUFFER];
+	int length;
+	serialize(query_packet, data, &length);
 
-// 	free_packet(query_packet);
-// 	init_mydns("127.0.0.1", 12345);
-// 	struct addrinfo* result;
-// 	int rc = resolve("video.cs.cmu.edu", "8080", NULL, &result);
-// 	struct sockaddr_in *ipv4 = (struct sockaddr_in*)result->ai_addr;
-// 	char ipAddress[INET_ADDRSTRLEN];
-// 	inet_ntop(AF_INET, &(ipv4->sin_addr), ipAddress, INET_ADDRSTRLEN);
-// 	printf("return code: %d, The IP address is: %s\n", rc, ipAddress);
-// 	freeaddrinfo(result);
-// 	// struct packet* response_packet = make_response_packet();
-// 	// struct packet* err_packet = make_error_response_packet();
-// 	return 1;
-// }
+	free_packet(query_packet);
+	init_mydns("127.0.0.1", 12345);
+	struct addrinfo* result;
+	int rc = resolve("video.cs.cmu.edu", "8080", NULL, &result);
+	struct sockaddr_in *ipv4 = (struct sockaddr_in*)result->ai_addr;
+	char ipAddress[INET_ADDRSTRLEN];
+	inet_ntop(AF_INET, &(ipv4->sin_addr), ipAddress, INET_ADDRSTRLEN);
+	printf("return code: %d, The IP address is: %s\n", rc, ipAddress);
+	freeaddrinfo(result);
+	rc = resolve("baidu.com", "8080", NULL, &result);
+	ipv4 = (struct sockaddr_in*)result->ai_addr;
+	inet_ntop(AF_INET, &(ipv4->sin_addr), ipAddress, INET_ADDRSTRLEN);
+	printf("return code: %d, The IP address is: %s\n", rc, ipAddress);
+	freeaddrinfo(result);
+	// struct packet* response_packet = make_response_packet();
+	// struct packet* err_packet = make_error_response_packet();
+	return 1;
+}

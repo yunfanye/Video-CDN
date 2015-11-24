@@ -131,7 +131,10 @@ char* make_error_response_packet(char* input_buffer, int* response_length){
 	char* response = (char*)malloc(MAX_BUFFER);
 	int length = sizeof(struct header);
 	length += strlen((char*)(input_buffer+length))+1 + sizeof(uint16_t)*2;
-	memcpy(response, input_buffer, length);
+	memcpy(response, input_buffer, MAX_BUFFER);
+	// struct resource_record* temp = ;
+	// *(struct resource_record**)(response+length) = NULL;
+	// printf("here length: %d, %p\n", length, response+length);
 	// ((struct header*)response)->RCODE = htons(3);
 	((struct header*)response)->RCODE = 3;
 	*response_length = length;
@@ -149,7 +152,7 @@ void serialize(struct packet* packet, char* data, int* length){
 	memcpy(data+offset, ((char*)packet->question)+sizeof(char*), sizeof(uint16_t)*2);
 	offset += sizeof(uint16_t)*2;
 
-	if (packet->resource_record) {
+	if(packet->resource_record){
 		memcpy(data+offset, packet->resource_record->NAME, strlen(packet->resource_record->NAME)+1);
 		offset += strlen(packet->resource_record->NAME)+1;
 		memcpy(data+offset, ((char*)packet->resource_record)+sizeof(char*), sizeof(uint16_t)*6);
@@ -164,17 +167,21 @@ void serialize(struct packet* packet, char* data, int* length){
 void print_serialized_packet(char* packet){
 	int length = 0;
 	printf("ID: %d\n", ntohs(((struct header*)packet)->ID));
+	printf("RCODE: %d\n", (((struct header*)packet)->RCODE));
 	length += sizeof(struct header);
 	printf("Question NAME: %s\n", packet+length);
 	length += strlen(packet+length)+1 + sizeof(uint16_t)*2;
-	printf("Resource record NAME: %s\n", packet+length);
-	printf("Resource record RDATA: %d\n", *(uint32_t*)(packet+length+strlen(packet+length)+1+sizeof(uint16_t)*4));
-	length += strlen(packet+length)+1 + sizeof(uint16_t)*6;
+	printf("length here: %d, %p\n", length, packet+length);
+	if((((struct header*)packet)->RCODE)!=3){
+		printf("Resource record NAME: %s\n", packet+length);
+		printf("Resource record RDATA: %d\n", *(uint32_t*)(packet+length+strlen(packet+length)+1+sizeof(uint16_t)*4));
+		length += strlen(packet+length)+1 + sizeof(uint16_t)*6;
+	}
 	printf("packet length: %d\n", length);
 }
 
 // TODO: need to debug here to find the right place of IP
-void parse_response(char* response, struct addrinfo **res, int packet_length){
+int parse_response(char* response, struct addrinfo **res, int packet_length){
 	print_serialized_packet(response);
 	char* QNAME = (char*)(response + sizeof(struct header));
 	int offest = packet_length + strlen(QNAME)+1;
@@ -182,5 +189,6 @@ void parse_response(char* response, struct addrinfo **res, int packet_length){
 	char* ip = response + offest + sizeof(uint16_t)*4;
 	// printf("%d\n", ntohl(*(uint32_t*)ip));
 	((struct sockaddr_in*)(*res)->ai_addr)->sin_addr.s_addr = ntohl(*(uint32_t*)ip);
-	return;
+	int RCODE = ((struct header*)response)->RCODE;
+	return RCODE;
 }

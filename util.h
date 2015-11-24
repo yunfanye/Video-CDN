@@ -58,7 +58,7 @@ struct packet{
 	struct resource_record* resource_record;
 };
 
-void parse_response(char* response, struct addrinfo **res, int packet_length);
+// void parse_response(char* response, struct addrinfo **res, int packet_length);
 void serialize(struct packet* packet, char* data, int* length);
 char* make_error_response_packet(char* input_buffer, int* response_length);
 char* make_response_packet(char* input_buffer, char* dest_addr, int* response_length);
@@ -67,5 +67,6 @@ struct packet* make_query_packet(const char* node);
 void make_addrinfo(struct addrinfo** res);
 void print_packet(struct packet* packet);
 void print_serialized_packet(char* packet);
+int parse_response(char* response, struct addrinfo **res, int packet_length);
 
 #endif
