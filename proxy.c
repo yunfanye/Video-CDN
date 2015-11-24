@@ -30,7 +30,7 @@ static int http_sock;
 /* function prototypes */
 int parse_command_line(int argc, char * argv[]);
 void mHTTP_init(int http_port);
-int handle_conn(conn_wrap_t * node, fd_set readset, fd_set writeset);
+int handle_conn(conn_wrap_t * node, fd_set * readset, fd_set * writeset);
 conn_wrap_t * add_linkedlist_node(conn_wrap_t * head, int client_fd);
 conn_wrap_t * accept_new_request(conn_wrap_t * head, int http_sock);
 conn_wrap_t * remove_linkedlist_node(conn_wrap_t * head, conn_wrap_t ** node);
@@ -93,7 +93,7 @@ int main(int argc, char* argv[]) {
 
 			loop_node = head;
 			while(loop_node != NULL) {
-				if(handle_conn(loop_node, readset, writeset) == 0)
+				if(handle_conn(loop_node, &readset, &writeset) == 0)
 					head = remove_linkedlist_node(head, &loop_node);
 				else
 					loop_node = loop_node -> next;
@@ -109,7 +109,7 @@ int main(int argc, char* argv[]) {
 					head = remove_linkedlist_node(head, &loop_node);
 				}
 				else {
-					handle_conn(loop_node);
+					handle_conn(loop_node, &readset, &writeset);
 					loop_node = loop_node -> next;
 				}
 			}
@@ -134,7 +134,7 @@ int generate_request(conn_wrap_t * head, const char * chunk_name) {
 	return 1;
 }
 
-int handle_conn(conn_wrap_t * node, fd_set readset, fd_set writeset) {
+int handle_conn(conn_wrap_t * node, fd_set * readset, fd_set * writeset) {
 	int client, server;
 	unsigned client_len, server_len;
 	char * client_buf, * server_buf;
@@ -150,7 +150,7 @@ int handle_conn(conn_wrap_t * node, fd_set readset, fd_set writeset) {
 
 	/* begin interact with client */
 	/* send video data to client */
-	if(client != -1  && FD_ISSET(client, &writeset) && server_len > 0) {
+	if(client != -1  && FD_ISSET(client, writeset) && server_len > 0) {
 		if ((writeret = mSend(client, server_buf, server_len)) != server_len) {
 			/* if some bytes have been sent */
 			if(writeret != -1) {
@@ -173,7 +173,7 @@ int handle_conn(conn_wrap_t * node, fd_set readset, fd_set writeset) {
 		}
 	}
 	/* recv request from client */
-	if(client != -1 && FD_ISSET(client, &readset) && client_len < BUF_SIZE) {
+	if(client != -1 && FD_ISSET(client, readset) && client_len < BUF_SIZE) {
 		readlen = BUF_SIZE - client_len;
 		if((readret = mRecv(client, client_buf + client_len, readlen)) > 0) {
 			client_len += readret;
@@ -209,7 +209,7 @@ int handle_conn(conn_wrap_t * node, fd_set readset, fd_set writeset) {
 
 	/* begin interact with web server */
 	/* send request to web server */
-	if(FD_ISSET(server, &writeset) && client_len > 0) {
+	if(FD_ISSET(server, writeset) && client_len > 0) {
 		/* block until f4m file is acquired */
 		if(node -> bitrate == -1) {
 			node -> bitrate = choose_bitrate(node -> server_ip, 
@@ -246,7 +246,7 @@ int handle_conn(conn_wrap_t * node, fd_set readset, fd_set writeset) {
 		}
 	}
 	/* recv video data from web server */
-	if(FD_ISSET(server, &readset) && server_len < BUF_SIZE) {
+	if(FD_ISSET(server, readset) && server_len < BUF_SIZE) {
 		readlen = BUF_SIZE - server_len;
 		if((readret = mRecv(server, server_buf + server_len, readlen)) > 0) {
 			server_len += readret;

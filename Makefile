@@ -1,15 +1,16 @@
-CFLAGS = -Wall -g -I/usr/include/libxml2/ -I./
+CFLAGS = -Wall -g -I/usr/include/libxml2/ -I./ 
+LIBS	= -L/usr/lib/x86_64-linux-gnu -lxml2
 LDFLAGS = -lxml2
 CC = gcc
 objects = log.o mydns.o
 
 nameserver_objects = log.o load_balancing.o nameserver.o util.o
 dns_objects = util.o mydns.o
-proxy_objects = y.tab.o lex.yy.o time_util.o proxy_log.o rate_adapter.o conn_handler.o HTTP_handler.o proxy.o
+proxy_objects = y.tab.o lex.yy.o util.o name_util.o f4m_parser.o mydns.o time_util.o proxy_log.o rate_adapter.o conn_handler.o HTTP_handler.o proxy.o
 
 
 proxy: $(proxy_objects)
-		$(CC) $(CFLAGS) $^ -o $@
+		$(CC) $(CFLAGS) $^ -o $@ $(LIBS)
 
 %.o: %.c
 		$(CC) $(CFLAGS) -c -o $@ $<
