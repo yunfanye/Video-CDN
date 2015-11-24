@@ -28,14 +28,14 @@ unsigned* extract_bitrate_list(char* buf, int size){
 				else{
 					struct bitrate* temp = (struct bitrate*)malloc(sizeof(struct bitrate));
 					temp->bitrate = bitrate_int;
-					bitrates->next = bitrates;
+					temp->next = bitrates;
 					bitrates = temp;
 				}
 			}
-			cur = cur->next;
 		}
+		cur = cur->next;
 	}
-	unsigned* bitrates_int = (unsigned*)malloc(sizeof(unsigned)*size);
+	unsigned* bitrates_int = (unsigned*)malloc(sizeof(unsigned)*(bitrates_size+1));
 	struct bitrate* temp = bitrates;
 	int i=0;
 	while(temp){
@@ -43,6 +43,7 @@ unsigned* extract_bitrate_list(char* buf, int size){
 		i++;
 		temp = temp->next;
 	}
+	bitrates_int[i] = 0;
 	return bitrates_int;
 }
 // unsigned * extract_bitrate_list(char * buf, int size) {
@@ -58,3 +59,28 @@ unsigned* extract_bitrate_list(char* buf, int size){
 // 	// }
 // }
 
+// int main(int argc, char* argv[]){
+// 	if(argc<2){
+// 		printf("Usage: ./f4m_parser /path/to/f4m_file\n");
+// 		return -1;
+// 	}
+// 	char* filename = argv[1];
+// 	FILE* fd = fopen(filename, "r");
+// 	char buffer[MAX_BUFFER];
+// 	size_t newLen = fread(buffer, sizeof(char), MAX_BUFFER, fd);
+//     if(newLen == 0){
+//         fputs("Error reading file", stderr);
+//     }else{
+//         buffer[newLen++] = '\0';
+//     }
+// 	unsigned* bitrates = extract_bitrate_list(buffer, newLen);
+// 	int i=0;
+// 	while(1){
+// 		printf("%d\n", bitrates[i]);
+// 		if(bitrates[i]==0){
+// 			break;
+// 		}
+// 		i++;
+// 	}
+// 	return -1;
+// }

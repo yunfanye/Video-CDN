@@ -37,8 +37,8 @@ nameserver.o: nameserver.c nameserver.h load_balancing.h util.h mydns.h
 nameserver: $(nameserver_objects)
 		$(CC) -o $@ $^ $(LDFLAGS)
 
-# f4m_parser: f4m_parser.o
-# 	$(CC) -o $@ $^ $(LDFLAGS)
+f4m_parser: f4m_parser.o
+	$(CC) -o $@ $^ $(LDFLAGS)
 
 # name_util: name_util.o
 # 	$(CC) -o $@ $^ $(LDFLAGS)
