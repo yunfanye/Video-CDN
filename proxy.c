@@ -223,7 +223,7 @@ int handle_conn(conn_wrap_t * node, fd_set * readset, fd_set * writeset) {
 	/* send request to web server */
 	if(FD_ISSET(server, writeset) && client_len > 0) {
 		/* block until f4m file is acquired */
-		log_msg("Send request to web server\n");
+		log_msg("Send request to web server %d\n", client_len);
 		if(node -> bitrate == -1) {
 			node -> bitrate = choose_bitrate(node -> server_ip, 
 				node -> chunk_name);
@@ -233,9 +233,13 @@ int handle_conn(conn_wrap_t * node, fd_set * readset, fd_set * writeset) {
 			/* if it is client initiated request,
 			 * process request and modify request before sending */
 			change_URI(node -> chunk_name, node -> bitrate);
-			process_clinet_request(client_buf, &node -> client_buf_len, 
+			process_clinet_request(client_buf, &client_len, 
 				node -> chunk_name);
 		}
+		node -> client_buf_len = client_len;
+
+		client_buf[client_len + 1] = '\0';
+		log_msg("Send %s to web server %d\n", client_buf, client_len);
 
 		if ((writeret = mSend(server, client_buf, client_len)) != client_len) {
 			/* if some bytes have been sent */
