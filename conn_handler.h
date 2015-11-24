@@ -4,7 +4,7 @@
 
 int conn_init(const char* fake_ip, const char * www_ip);
 /* setup outbound connection to web server */
-int proxy_conn_setup();
+int proxy_conn_setup(char * server_ip);
 
 
 #endif

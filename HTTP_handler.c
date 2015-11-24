@@ -39,6 +39,9 @@ int extract_video_name(const char * request, int buf_size, char * out_buf) {
 				expected = '\r';
 				break;
 			case STATE_CRLF:
+				memcpy(work_buf, buf, index - 2);
+				work_buf[index - 1] = '\0';
+				log_msg("request line: %s\n", work_buf);
 				if(sscanf(work_buf, "%s %s %s", method, out_buf, prot) != 3)
 					return 0;
 				return 1;
@@ -98,7 +101,7 @@ int process_clinet_request(char * request, unsigned int * old_buf_size,
 					}
 				} else {
 					memcpy(work_buf, buf, index - 2);
-					work_buf[index + 1] = '\0';
+					work_buf[index - 1] = '\0';
 					if(sscanf(work_buf, "%s %s %s", method, old_uri, prot) != 3)
 						log_error("Parse request line error!");
 					/* change to new request line */
@@ -148,6 +151,13 @@ int change_URI(char * old_uri, int bitrate) {
 	/* if it is xxxx.f4m, change it to xxxx_nolist.f4m */
 	if((target = strcasestr(old_uri, ".f4m")) != NULL) {
 		strcpy(target, "_nolist.f4m");
+	}
+	else if(bitrate == 0 || strcasestr(old_uri, ".html") != NULL ||
+		strcasestr(old_uri, ".ico") != NULL ||
+		strcasestr(old_uri, ".swf") != NULL ||
+		strcasestr(old_uri, ".js") != NULL) 
+	{
+		return 1;
 	}
 	else {
 		str_len = strlen(old_uri);

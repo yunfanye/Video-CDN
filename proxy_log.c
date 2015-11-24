@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdarg.h>
+#include <errno.h>
 
 #define LOG_BUF_SIZE	8192
 
@@ -17,10 +18,6 @@ void log_destory() {
 	fclose(logfile);
 }
 
-void log_error(char * error_msg) {
-	fwrite(error_msg, 1, strlen(error_msg), logfile);
-}
-
 void log_msg(const char * format, ...) {
 	int len;
 	char buf[LOG_BUF_SIZE];
@@ -29,6 +26,10 @@ void log_msg(const char * format, ...) {
 	len = vsnprintf(buf, LOG_BUF_SIZE - 1, format, args);
 	va_end(args);
 	fwrite(buf, 1, len, logfile);
+}
+
+void log_error(char * error_msg) {
+	log_msg("ERROR! %s, %s\n", error_msg, strerror(errno));
 }
 
 /* After each request, it should append the following line to the log:
