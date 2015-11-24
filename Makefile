@@ -48,4 +48,10 @@ load_balancing: load_balancing.o
 		$(CC) -o $@ $^ $(LDFLAGS)
 
 clean:
-	rm -f *.o *~ *.gch lex.yy.c y.tab.c y.tab.h
+	rm -f *.o *~ *.gch lex.yy.c y.tab.c y.tab.h proxy_log_file.log proxy nameserver
+	
+run:
+	./proxy proxy_log_file.log 0.5 1234 3.0.0.0 2.0.0.0 5050 4.0.0.0
+	
+debug: proxy
+	(scp proxy proj3@128.237.165.185:project3/proxy;)
