@@ -54,6 +54,8 @@ int main(int argc, char* argv[]) {
 	parse_command_line(argc, argv);
 
 	while (1) {
+		timeout.tv_sec = 1;
+		timeout.tv_usec = 0;
 		/* init fd sets */
 		FD_ZERO(&readset);
 		FD_ZERO(&writeset);
@@ -84,10 +86,12 @@ int main(int argc, char* argv[]) {
 			nfds = MAX(nfds, loop_node -> server_fd);
 			loop_node = loop_node -> next;
 		}
-
+		nfds++; /* plus one! */
+		log_msg("start selecting! nfds: %d\n", nfds);
 		if(select(nfds, &readset, &writeset, NULL, &timeout) >= 0) {
 
 			if(FD_ISSET(http_sock, &readset)) {
+				log_msg("new request\n");
 				head = accept_new_request(head, http_sock);
 			}
 
@@ -147,7 +151,7 @@ int handle_conn(conn_wrap_t * node, fd_set * readset, fd_set * writeset) {
 	server_len = node -> server_buf_len;
 	client_buf = node -> client_buf;
 	server_buf = node -> client_buf;
-
+	log_msg("handle_conn: server buf %d, client buf %d\n", server_len, client_len);
 	/* begin interact with client */
 	/* send video data to client */
 	if(client != -1  && FD_ISSET(client, writeset) && server_len > 0) {
@@ -378,6 +382,7 @@ void mHTTP_init(int http_port) {
 	/* listen to the sock */
     if (listen(http_sock, 50)) 
     	log_error("Error listening on HTTP socket.");
+    log_msg("start listening on port %d\n", http_port);
 }
 
 ssize_t mRecv(int sockfd, void * buf, size_t readlen) {

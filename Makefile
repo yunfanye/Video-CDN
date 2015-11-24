@@ -49,9 +49,13 @@ load_balancing: load_balancing.o
 
 clean:
 	rm -f *.o *~ *.gch lex.yy.c y.tab.c y.tab.h proxy_log_file.log proxy nameserver
+
+
+# /proxy <log> <alpha> <listen-port> <fake-ip> <dns-ip> <dns-port>
+# [<www-ip>]
 	
 run:
-	./proxy proxy_log_file.log 0.5 1234 3.0.0.0 2.0.0.0 5050 4.0.0.0
+	./proxy proxy_log_file.log 0.5 1234 1.0.0.1 5.0.0.1 5050 4.0.0.1
 	
 debug: proxy
 	(scp proxy proj3@128.237.165.185:project3/proxy;)
