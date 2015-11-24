@@ -40,8 +40,8 @@ nameserver: $(nameserver_objects)
 f4m_parser: f4m_parser.o
 	$(CC) -o $@ $^ $(LDFLAGS)
 
-# name_util: name_util.o
-# 	$(CC) -o $@ $^ $(LDFLAGS)
+name_util: name_util.o
+	$(CC) -o $@ $^ $(LDFLAGS)
 
 load_balancing: load_balancing.o
 		$(CC) -o $@ $^ $(LDFLAGS)
