@@ -108,13 +108,14 @@ int main(int argc, char* argv[]) {
 			loop_node = self_req_head;
 			while(loop_node != NULL) {
 				if(loop_node -> all_data_received) {
-					loop_node -> server_buf[500] ='\0'; 
-					log_msg("f4m doc: %p, %d\ncontent: %s\n", 
-						loop_node -> server_buf, loop_node -> server_buf_len, loop_node -> server_buf + 8);
+					loop_node -> server_buf[1000] ='\0'; 
+					log_msg("client %d, server %d, f4m doc: %p, %d\ncontent: %s\n", 
+						loop_node -> client_fd, loop_node -> server_fd,
+						loop_node -> server_buf, loop_node -> server_buf_len, loop_node -> server_buf);
 					bitrates = extract_bitrate_list(loop_node -> server_buf,
 						loop_node -> server_buf_len);
 					set_bitrate_list(loop_node -> chunk_name, bitrates);
-					head = remove_linkedlist_node(head, &loop_node);
+					self_req_head = remove_linkedlist_node(self_req_head, &loop_node);
 				}
 				else {
 					log_msg("handle server initiated request!\n");
@@ -140,6 +141,7 @@ int generate_request(conn_wrap_t * head, const char * chunk_name) {
 	snprintf(buf, SMALL_BUF_SIZE, "GET /vod/big_buck_bunny.f4m HTTP/1.1\r\nConnection: Close\r\n\r\n");
 	log_msg("get f4m from web server\n%s", buf);
 	strcpy(node -> client_buf, buf);
+	strcpy(node -> chunk_name, chunk_name);
 	node -> client_buf_len = strlen(buf);
 	return 1;
 }
@@ -156,7 +158,7 @@ int handle_conn(conn_wrap_t * node, fd_set * readset, fd_set * writeset) {
 	client_len = node -> client_buf_len;
 	server_len = node -> server_buf_len;
 	client_buf = node -> client_buf;
-	server_buf = node -> client_buf;
+	server_buf = node -> server_buf;
 	log_msg("handle_conn: node %p, server buf %d, client buf %d\n", node, server_len, client_len);
 	/* begin interact with client */
 	/* send video data to client */
@@ -226,7 +228,8 @@ int handle_conn(conn_wrap_t * node, fd_set * readset, fd_set * writeset) {
 
 	if(node -> all_data_received) {
 		/* tell client no more data */
-		shutdown(client, SHUT_WR);
+		if(client != -1)
+			shutdown(client, SHUT_WR);
 		return server_len == 1;
 	}
 
@@ -238,6 +241,7 @@ int handle_conn(conn_wrap_t * node, fd_set * readset, fd_set * writeset) {
 		if(node -> bitrate == -1) {
 			node -> bitrate = choose_bitrate(node -> server_ip, 
 				node -> chunk_name);
+			log_msg("new bitrate chosen: %d\n", node -> bitrate);
 			return 1;
 		}
 		if(client != -1) {
@@ -250,7 +254,7 @@ int handle_conn(conn_wrap_t * node, fd_set * readset, fd_set * writeset) {
 		node -> client_buf_len = client_len;
 
 		client_buf[client_len + 2] = '\0';
-		log_msg("Send %p\n%s to web server %d\n", client_buf, client_buf, client_len);
+		log_msg("Detailed Send %p\n%s to web server %d\n", client_buf, client_buf, client_len);
 
 		if ((writeret = mSend(server, client_buf, client_len)) != client_len) {
 			/* if some bytes have been sent */

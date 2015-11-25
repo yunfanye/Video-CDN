@@ -19,16 +19,25 @@ int set_bitrate_list(const char * chunk_name, unsigned * list) {
 	char name[SMALL_BUF_SIZE];
 	bitrate_list_t * node = bitrate_list;
 	get_videoname_from_chunkname(chunk_name, name);
-	while(node -> next !=  NULL) {
+	log_msg("set bitrate list: %s\n", chunk_name);
+	while(node != NULL && node -> next !=  NULL) {
 		if(!strcmp(node -> name, name))
 			return 1;
 		node = node -> next;
 	}
-	if(!strcmp(node -> name, name))
+	if(node != NULL && !strcmp(node -> name, name))
 		return 1;
 	else {
-		node -> next = malloc(sizeof(bitrate_list_t));
-		node = node -> next;
+		log_msg("set new bitrate list: %s\n", name);
+		if(node == NULL) {
+			node = malloc(sizeof(bitrate_list_t));
+			bitrate_list = node;
+			log_msg("bitrate list header modified\n");
+		}
+		else {
+			node -> next = malloc(sizeof(bitrate_list_t));
+			node = node -> next;
+		}
 		node -> next = NULL;
 		strcpy(node -> name, name);
 		node -> bitrates = list; 
@@ -40,6 +49,7 @@ unsigned * get_bitrate_list(const char * chunk_name) {
 	char name[SMALL_BUF_SIZE];
 	bitrate_list_t * node = bitrate_list;
 	get_videoname_from_chunkname(chunk_name, name);
+	log_msg("node: %p, get bitrate list: %s\n", node, name);
 	while(node !=  NULL) {
 		if(!strcmp(node -> name, name))
 			return node ->  bitrates;
