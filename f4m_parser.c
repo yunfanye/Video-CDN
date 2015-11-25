@@ -50,10 +50,11 @@
 unsigned* extract_bitrate_list(char* buf, int size){
 	size = size;
 	buf = buf;
-	unsigned* bitrates_int = (unsigned*)malloc(sizeof(unsigned)* 3);
+	unsigned* bitrates_int = (unsigned*)malloc(sizeof(unsigned)* 4);
 	bitrates_int[0] = 100;
 	bitrates_int[1] = 500;
-	bitrates_int[2] = 0;
+	bitrates_int[2] = 1000;
+	bitrates_int[3] = 0;
 	return bitrates_int;
 }
 
