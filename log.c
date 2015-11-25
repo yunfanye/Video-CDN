@@ -7,6 +7,7 @@
 // include library needed for vfprintf functions
 #include <stdarg.h>
 #include "log.h"
+#include <time.h>
 
 
 // file pointer set by server
@@ -38,6 +39,8 @@ void mylog(char* format, ...){
 	fflush(log_file_fd);
 }
 
-void dns_log(int time, char* client_ip, char* query_name, char* response_ip){
-	mylog("%d %s %s %s\n", time, client_ip, query_name, response_ip);
+void dns_log(char* client_ip, char* query_name, char* response_ip){
+	time_t print_time;
+	print_time = time(NULL);
+	mylog("%ld %s %s %s\n", print_time, client_ip, query_name, response_ip);
 }
