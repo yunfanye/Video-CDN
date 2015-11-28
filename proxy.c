@@ -342,6 +342,7 @@ conn_wrap_t * add_linkedlist_node(conn_wrap_t * head, int client_fd) {
 	head -> server_buf_len = 0;
 	head -> trasmitted_size = 0;
 	head -> all_data_received = false;
+	head -> start_time = milli_time();
 	return head;
 }
 
