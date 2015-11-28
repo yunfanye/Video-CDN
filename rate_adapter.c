@@ -135,15 +135,15 @@ int estimate_tp(unsigned long start_time, unsigned transmitted_size,
 {
 	unsigned ave_put;
 	unsigned long end_time = milli_time();
-	float duration = end_time - start_time;
+	float duration = end_time - start_time; /* us */
 	unsigned now_put;
 	ave_put = get_server_bitrate(server_ip);
-	now_put = (double)transmitted_size * 1000.0/ (double)duration;
+	now_put = (double)transmitted_size * 1000.0/ (double)duration;/* kbps */
 	/* estimate */
 	ave_put = alpha * now_put + (1.0 - alpha) * ave_put;
 	// printf("estimate_tp: %d, %d, %d, %f, %f\n", ave_put, now_put, transmitted_size, alpha, duration);
 	set_server_bitrate(server_ip, ave_put);
-	log_parameters(end_time/1000, duration, now_put/1000, ave_put/1000, bitrate,
+	log_parameters(end_time/1000000, duration, now_put, ave_put, bitrate,
 		server_ip, chunk_name);
 	return 1;
 }
