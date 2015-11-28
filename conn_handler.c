@@ -52,7 +52,7 @@ int server_conn(int clientfd, char * server_ip) {
 		rc = resolve("video.cs.cmu.edu", "8080", NULL, &result);
 		if (rc != 0)
 			log_error("Resolve dns error!");
-		if (connect(clientfd, result -> ai_addr, result -> ai_addrlen) != -1)
+		if (connect(clientfd, result -> ai_addr, result -> ai_addrlen) == -1)
             log_error("Failed connecting to web server!");
 		ip_str = inet_ntoa(
 			((struct sockaddr_in *)(result -> ai_addr)) -> sin_addr);
@@ -64,7 +64,7 @@ int server_conn(int clientfd, char * server_ip) {
 		addr.sin_port = htons(8080);
 		addr.sin_addr.s_addr = www_ip_addr;
 		addrlen = sizeof(addr);
-		if (connect(clientfd, (struct sockaddr *) &addr, addrlen) != -1)
+		if (connect(clientfd, (struct sockaddr *) &addr, addrlen) == -1)
             log_error("Failed connecting to default web server!");
         ip_str = inet_ntoa(addr.sin_addr); /* statically allocated */
         log_msg("connect to www_ip: %s\n", ip_str);
