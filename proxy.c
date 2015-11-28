@@ -25,7 +25,9 @@
 #define MAX(x, y) ((x)>(y)?(x):(y))
 
 /* global variables */
-static int http_sock;
+static int _http_sock;
+
+static int _port;
 
 /* function prototypes */
 int parse_command_line(int argc, char * argv[]);
@@ -59,8 +61,8 @@ int main(int argc, char* argv[]) {
 		/* init fd sets */
 		FD_ZERO(&readset);
 		FD_ZERO(&writeset);
-		FD_SET(http_sock, &readset);   	
-		nfds = http_sock;
+		FD_SET(_http_sock, &readset);   	
+		nfds = _http_sock;
 		/* client request forwarding */
 		loop_node = head;
 		while(loop_node != NULL) {
@@ -90,8 +92,8 @@ int main(int argc, char* argv[]) {
 		log_msg("start selecting! nfds: %d\n", nfds);
 		if(select(nfds, &readset, &writeset, NULL, &timeout) >= 0) {
 
-			if(FD_ISSET(http_sock, &readset)) {			
-				head = accept_new_request(head, http_sock);
+			if(FD_ISSET(_http_sock, &readset)) {			
+				head = accept_new_request(head, _http_sock);
 				log_msg("new request, head: %p\n", head);
 			}
 
@@ -108,9 +110,9 @@ int main(int argc, char* argv[]) {
 			loop_node = self_req_head;
 			while(loop_node != NULL) {
 				if(loop_node -> all_data_received) {
-					loop_node -> server_buf[1000] ='\0'; 
-					log_msg("client %d, server %d, f4m doc: %p, %d\ncontent: %s\n", 
-						loop_node -> client_fd, loop_node -> server_fd,
+					loop_node -> server_buf[loop_node -> server_buf_len] ='\0';
+					log_msg("client %d, server %d, client buf: %s, f4m doc: %p, %d\ncontent: %s\n", 
+						loop_node -> client_fd, loop_node -> server_fd, loop_node -> client_buf,
 						loop_node -> server_buf, loop_node -> server_buf_len, loop_node -> server_buf);
 					bitrates = extract_bitrate_list(loop_node -> server_buf,
 						loop_node -> server_buf_len);
@@ -138,11 +140,17 @@ int generate_request(conn_wrap_t * head, const char * chunk_name) {
 	self_req_head = add_linkedlist_node(self_req_head, -1);
 	node = self_req_head;
 	/* TODO: URI format */
-	snprintf(buf, SMALL_BUF_SIZE, "GET /vod/big_buck_bunny.f4m HTTP/1.1\r\nConnection: Close\r\n\r\n");
-	log_msg("get f4m from web server\n%s", buf);
+	snprintf(buf, SMALL_BUF_SIZE, "GET /vod/big_buck_bunny.f4m HTTP/1.1\r\n"
+		"Host: 4.0.0.1:%d\r\nConnection: close\r\nAccept: */*\r\n"
+		"Accept-Encoding: gzip, deflate, sdch\r\n"
+		"User-Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36"
+		" (KHTML, like Gecko) Chrome/45.0.2454.101 Safari/537.36\r\n\r\n",
+		_port);
+
 	strcpy(node -> client_buf, buf);
 	strcpy(node -> chunk_name, chunk_name);
 	node -> client_buf_len = strlen(buf);
+	log_msg("get f4m from web server, len %d\n%s", node -> client_buf_len, buf);
 	return 1;
 }
 
@@ -253,7 +261,7 @@ int handle_conn(conn_wrap_t * node, fd_set * readset, fd_set * writeset) {
 		}
 		node -> client_buf_len = client_len;
 
-		client_buf[client_len + 2] = '\0';
+		client_buf[client_len] = '\0';
 		log_msg("Detailed Send %p\n%s to web server %d\n", client_buf, client_buf, client_len);
 
 		if ((writeret = mSend(server, client_buf, client_len)) != client_len) {
@@ -403,21 +411,22 @@ int parse_command_line(int argc, char * argv[]) {
 void mHTTP_init(int http_port) {
 	struct sockaddr_in http_addr;
     /* Create HTTP socket */
-    if ((http_sock = socket(AF_INET, SOCK_STREAM, 0)) == -1)
+    if ((_http_sock = socket(AF_INET, SOCK_STREAM, 0)) == -1)
         log_error("Failed creating HTTP socket.");	
 	/* bind socket */
     http_addr.sin_family = AF_INET;
     http_addr.sin_port = htons(http_port);
     http_addr.sin_addr.s_addr = INADDR_ANY;
     /* servers bind sockets to ports---notify the OS they accept connections */
-    if (bind(http_sock, (struct sockaddr *) &http_addr, sizeof(http_addr))) {
+    if (bind(_http_sock, (struct sockaddr *) &http_addr, sizeof(http_addr))) {
     	log_error("Failed binding HTTP socket.");   
     	exit(EXIT_FAILURE);
     }
 	/* listen to the sock */
-    if (listen(http_sock, 50)) 
+    if (listen(_http_sock, 50)) 
     	log_error("Error listening on HTTP socket.");
     log_msg("start listening on port %d\n", http_port);
+    _port = http_port;
 }
 
 ssize_t mRecv(int sockfd, void * buf, size_t readlen) {

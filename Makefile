@@ -57,5 +57,8 @@ clean:
 run:
 	./proxy proxy_log_file.log 0.5 1234 1.0.0.1 5.0.0.1 5050 4.0.0.1
 	
+#debug: proxy
+#	(scp proxy proj3@128.237.165.185:project3/proxy;)
+
 debug: proxy
-	(scp proxy proj3@128.237.165.185:project3/proxy;)
+	(scp proxy proj3@10.0.0.39:project3/proxy;)
