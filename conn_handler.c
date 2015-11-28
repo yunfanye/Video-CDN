@@ -55,7 +55,7 @@ int server_conn(int clientfd, char * server_ip) {
 		// printf("return code: %d, The IP address is: %s\n", rc, ipAddress;
 		if (rc != 0)
 			log_error("Resolve dns error!");
-		if (connect(clientfd, result -> ai_addr, result -> ai_addrlen) != -1){
+		if (connect(clientfd, result -> ai_addr, result -> ai_addrlen) == -1){
             log_error("Failed connecting to web server!");
 		}
 		ip_str = inet_ntoa(
@@ -69,7 +69,7 @@ int server_conn(int clientfd, char * server_ip) {
 		addr.sin_port = htons(8080);
 		addr.sin_addr.s_addr = www_ip_addr;
 		addrlen = sizeof(addr);
-		if (connect(clientfd, (struct sockaddr *) &addr, addrlen) != -1)
+		if (connect(clientfd, (struct sockaddr *) &addr, addrlen) == -1)
             log_error("Failed connecting to default web server!");
         ip_str = inet_ntoa(addr.sin_addr); /* statically allocated */
         log_msg("connect to www_ip: %s\n", ip_str);

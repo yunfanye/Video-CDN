@@ -8,6 +8,7 @@ nameserver_objects = log.o load_balancing.o nameserver.o util.o
 dns_objects = util.o mydns.o
 proxy_objects = y.tab.o lex.yy.o util.o name_util.o f4m_parser.o mydns.o time_util.o proxy_log.o rate_adapter.o conn_handler.o HTTP_handler.o proxy.o
 
+all: proxy nameserver
 
 proxy: $(proxy_objects)
 		$(CC) $(CFLAGS) $^ -o $@ $(LIBS)
