@@ -47,6 +47,7 @@ int resolve(const char *node, const char *service, const struct addrinfo *hints,
 	}
 	int RCODE = parse_response(buffer, res, length);
 	((struct sockaddr_in*)(*res)->ai_addr)->sin_port = htons(atoi(service));
+	((struct sockaddr_in*)(*res)->ai_addr)->sin_family = AF_INET;
 	free_packet(packet);
 	if(RCODE!=0){
 		return -1;
