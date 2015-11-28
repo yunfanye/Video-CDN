@@ -6,9 +6,14 @@
  * <media url="/myvideo/high" bitrate="1708" width="1920" height="1080"/> 
  * return malloc-ed bitrate list
  */
-/* unsigned* extract_bitrate_list(char* buf, int size){
+
+unsigned* extract_bitrate_list(char* buf, int size){
 	// buf[size] = '\0';
-	xmlDocPtr doc = xmlReadMemory(buf, size, "noname.xml", NULL, 0);
+	printf("In extract_bitrate_list....................................\n");
+	printf("%s\n", buf);
+	char* new_buf = strstr(buf, "<?xml");
+	printf("%s\n", new_buf);
+	xmlDocPtr doc = xmlReadMemory(new_buf, size, "noname.xml", NULL, 0);
 	xmlNodePtr cur = xmlDocGetRootElement(doc);
 	cur = cur->xmlChildrenNode;
 	struct bitrate* bitrates = NULL;
@@ -45,18 +50,18 @@
 	}
 	bitrates_int[i] = 0;
 	return bitrates_int;
-} */
-
-unsigned* extract_bitrate_list(char* buf, int size){
-	size = size;
-	buf = buf;
-	unsigned* bitrates_int = (unsigned*)malloc(sizeof(unsigned)* 4);
-	bitrates_int[0] = 100;
-	bitrates_int[1] = 500;
-	bitrates_int[2] = 1000;
-	bitrates_int[3] = 0;
-	return bitrates_int;
 }
+
+// unsigned* extract_bitrate_list(char* buf, int size){
+// 	size = size;
+// 	buf = buf;
+// 	unsigned* bitrates_int = (unsigned*)malloc(sizeof(unsigned)* 4);
+// 	bitrates_int[0] = 100;
+// 	bitrates_int[1] = 500;
+// 	bitrates_int[2] = 1000;
+// 	bitrates_int[3] = 0;
+// 	return bitrates_int;
+// }
 
 
 // unsigned * extract_bitrate_list(char * buf, int size) {
