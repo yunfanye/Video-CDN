@@ -108,11 +108,11 @@ int choose_bitrate(const char * server_ip, const char * name) {
 	result = bitrates[0];
 	if(now_bitrate > 0 && result > 0) {
 		i = 1;
-		printf("choose_bitrate: %s, %s, %d, %d, %d\n", server_ip, name, i, now_bitrate, result);
+		// printf("choose_bitrate: %s, %s, %d, %d, %d\n", server_ip, name, i, now_bitrate, result);
 		/* choose maximum bit rate, 1.5x which less than now_bitrate */
 		while(bitrates[i] != 0 && bitrates[i] * RATIO < now_bitrate) {
 			result = bitrates[i];
-			printf("inner choose_bitrate: %s, %s, %d, %d, %d, %d\n", server_ip, name, i, now_bitrate, result, bitrates[i+1]);
+			// printf("inner choose_bitrate: %s, %s, %d, %d, %d, %d\n", server_ip, name, i, now_bitrate, result, bitrates[i+1]);
 			i++;
 		}
 	}
@@ -139,7 +139,7 @@ int estimate_tp(unsigned long start_time, unsigned transmitted_size,
 	float duration = end_time - start_time; /* us */
 	unsigned now_put;
 	ave_put = get_server_bitrate(server_ip);
-	now_put = (double)transmitted_size * 1000.0/ (double)duration;/* kbps */
+	now_put = (double)transmitted_size * 8 * 1000.0/ (double)duration;/* kbps */
 	/* estimate */
 	ave_put = alpha * now_put + (1.0 - alpha) * ave_put;
 	// printf("estimate_tp: %d, %d, %d, %f, %f\n", ave_put, now_put, transmitted_size, alpha, duration);
