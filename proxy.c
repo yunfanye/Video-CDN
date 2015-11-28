@@ -141,7 +141,7 @@ int generate_request(conn_wrap_t * head, const char * chunk_name) {
 	node = self_req_head;
 	/* TODO: URI format */
 	snprintf(buf, SMALL_BUF_SIZE, "GET /vod/big_buck_bunny.f4m HTTP/1.1\r\n"
-		"Host: 4.0.0.1:%d\r\nConnection: close\r\nAccept: */*\r\n"
+		"Host: 2.0.0.1:%d\r\nConnection: close\r\nAccept: */*\r\n"
 		"Accept-Encoding: gzip, deflate, sdch\r\n"
 		"User-Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36"
 		" (KHTML, like Gecko) Chrome/45.0.2454.101 Safari/537.36\r\n\r\n",
