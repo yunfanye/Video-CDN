@@ -96,12 +96,12 @@ int main(int argc, char* argv[]) {
 				inet_ntop(AF_INET, &(from.sin_addr), addr, INET_ADDRSTRLEN);
 				printf("client address: %s\n", addr);
 				// print_serialized_packet(buffer, ret);
-				int jj;
-				for(jj=0;jj<reference_packet_length-sizeof(uint16_t);jj++){
-					if(memcmp(buffer+sizeof(uint16_t)+jj, reference_packet+sizeof(uint16_t)+jj, 1)!=0){
-						printf("differ: %d, %c, %c\n", jj, (char*)(buffer+sizeof(uint16_t)+jj), (char*)(reference_packet+sizeof(uint16_t)+jj));
-					}
-				}
+				// int jj;
+				// for(jj=0;jj<reference_packet_length-sizeof(uint16_t);jj++){
+				// 	if(memcmp(buffer+sizeof(uint16_t)+jj, reference_packet+sizeof(uint16_t)+jj, 1)!=0){
+				// 		printf("differ: %d, %c, %c\n", jj, (char*)(buffer+sizeof(uint16_t)+jj), (char*)(reference_packet+sizeof(uint16_t)+jj));
+				// 	}
+				// }
 				if(memcmp(buffer+sizeof(uint16_t), reference_packet+sizeof(uint16_t), reference_packet_length-sizeof(uint16_t))==0){
 					// generate response
 					printf("correct dns\n");
