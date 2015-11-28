@@ -53,6 +53,6 @@ void log_parameters(unsigned long time, float duration, unsigned now_put,
 	unsigned ave_put, unsigned bitrate, const char * server_ip, 
 	const char * chunkname)
 {
-	log_msg_param("%lu %f %u %u %u %s %s\n", time, duration, now_put, ave_put, 
+	log_msg_param("%lu %4.2f %u %u %u %s %s\n", time, duration, now_put, ave_put, 
 		bitrate, server_ip, chunkname);
 }

@@ -116,6 +116,7 @@ int choose_bitrate(const char * server_ip, const char * name) {
 			i++;
 		}
 	}
+	log_msg("bitrate result: chosen %d, now %d\n", result, now_bitrate);
 	return result;
 }
 
@@ -143,7 +144,7 @@ int estimate_tp(unsigned long start_time, unsigned transmitted_size,
 	ave_put = alpha * now_put + (1.0 - alpha) * ave_put;
 	// printf("estimate_tp: %d, %d, %d, %f, %f\n", ave_put, now_put, transmitted_size, alpha, duration);
 	set_server_bitrate(server_ip, ave_put);
-	log_parameters(end_time/1000000, duration, now_put, ave_put, bitrate,
+	log_parameters(end_time/1000000, duration/1000.0, now_put, ave_put, bitrate,
 		server_ip, chunk_name);
 	return 1;
 }

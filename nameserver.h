@@ -20,6 +20,7 @@
 #include "mydns.h"
 #include "load_balancing.h"
 #include "util.h"
+#include "log.h"
 
 int bind_udp(fd_set* read_set, char* ip, int port);
 
