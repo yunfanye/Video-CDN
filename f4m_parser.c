@@ -9,10 +9,10 @@
 
 unsigned* extract_bitrate_list(char* buf, int size){
 	// buf[size] = '\0';
-	printf("In extract_bitrate_list....................................\n");
-	printf("%s\n", buf);
+	// printf("In extract_bitrate_list....................................\n");
+	// printf("%s\n", buf);
 	char* new_buf = strstr(buf, "<?xml");
-	printf("%s\n", new_buf);
+	// printf("%s\n", new_buf);
 	xmlDocPtr doc = xmlReadMemory(new_buf, size, "noname.xml", NULL, 0);
 	xmlNodePtr cur = xmlDocGetRootElement(doc);
 	cur = cur->xmlChildrenNode;
@@ -41,15 +41,33 @@ unsigned* extract_bitrate_list(char* buf, int size){
 		cur = cur->next;
 	}
 	unsigned* bitrates_int = (unsigned*)malloc(sizeof(unsigned)*(bitrates_size+1));
-	struct bitrate* temp = bitrates;
 	int i=0;
-	while(temp){
-		bitrates_int[i] = temp->bitrate;
+	if(bitrates_size==1){
+		bitrates_int[i] = bitrates->bitrate;
 		i++;
-		temp = temp->next;
+	}
+	else{
+		bitrates_int[0] = find_min_bitrate_above_t(bitrates, -1);
+		i++;
+		while(i<bitrates_size){
+			bitrates_int[i] = find_min_bitrate_above_t(bitrates, bitrates_int[i-1]);
+			i++;
+		}
 	}
 	bitrates_int[i] = 0;
 	return bitrates_int;
+}
+
+int find_min_bitrate_above_t(struct bitrate* bitrates, int t){
+	int min_bitrate = INT_MAX;
+	struct bitrate* temp = bitrates;
+	while(temp){
+		if(temp->bitrate<min_bitrate&&temp->bitrate>t){
+			min_bitrate = temp->bitrate;
+		}
+		temp = temp->next;
+	}
+	return min_bitrate;
 }
 
 // unsigned* extract_bitrate_list(char* buf, int size){
