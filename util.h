@@ -19,15 +19,16 @@
 
 struct header{
 	uint16_t ID;
+	
+	uint8_t RD:1;
+	uint8_t TC:1;
+	uint8_t AA:1;
+	uint8_t Opcode:4;
+	uint8_t QR:1;
 
-	uint16_t QR:1;
-	uint16_t Opcode:4;
-	uint16_t AA:1;
-	uint16_t TC:1;
-	uint16_t RD:1;
-	uint16_t RA:1;
-	uint16_t Z:3;
-	uint16_t RCODE:4;
+	uint8_t RCODE:4;
+	uint8_t Z:3;
+	uint8_t RA:1;
 
 	uint16_t QDCOUNT;
 	uint16_t ANCOUNT;
@@ -47,7 +48,7 @@ struct resource_record{
 	char* NAME;
 	uint16_t TYPE;
 	uint16_t CLASS;
-	uint16_t TTL;
+	uint32_t TTL;
 	uint16_t RDLENGTH;
 	uint32_t RDATA;
 };
@@ -66,7 +67,8 @@ void free_packet(struct packet* packet);
 struct packet* make_query_packet(const char* node);
 void make_addrinfo(struct addrinfo** res);
 void print_packet(struct packet* packet);
-void print_serialized_packet(char* packet);
+void print_serialized_packet(char* packet, int packet_length);
 int parse_response(char* response, struct addrinfo **res, int packet_length);
+void convertName(char* name, const char* const_src);
 
 #endif

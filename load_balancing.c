@@ -53,10 +53,12 @@ int parse_LSAs_file(char *filename){
 }
 
 void build_routing_table(int round_robin){
-	struct node_pointer* client = clients;
-	while(client){
-		nearest_server(client->p_node);
-		client = client->next;
+	if(round_robin==0){
+		struct node_pointer* client = clients;
+		while(client){
+			nearest_server(client->p_node);
+			client = client->next;
+		}
 	}
 }
 
@@ -112,9 +114,25 @@ struct node* add_node(char* name, struct node** list){
 		strcpy(temp->name, name);
 		temp->seq_num = -1;
 		temp->neighbors = NULL;
-		temp->next = *list;
+		temp->next = NULL;
 		temp->visited = -1;
-		*list = temp;
+		struct node* p = *list;
+		if(p==NULL){
+			*list = temp;
+		}
+		else{
+			while(p){
+				if(p->next!=NULL){
+					p = p->next;
+				}
+				else{
+					break;
+				}
+			}
+			p->next = temp;
+		}
+		// temp->next = *list;
+		// *list = temp;
 	}
 	return temp;
 }
@@ -133,8 +151,24 @@ void add_node_list(struct node_pointer** list, struct node* p_node){
 	if(temp==NULL){
 		temp = (struct node_pointer*)malloc(sizeof(struct node_pointer));
 		temp->p_node = p_node;
-		temp->next = *list;
-		*list = temp;
+		temp->next = NULL;
+		struct node_pointer* p = *list;
+		if(p==NULL){
+			*list = temp;
+		}
+		else{
+			while(p){
+				if(p->next!=NULL){
+					p = p->next;
+				}
+				else{
+					break;
+				}
+			}
+			p->next = temp;
+		}
+		// temp->next = *list;
+		// *list = temp;
 	}
 }
 

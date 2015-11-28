@@ -62,15 +62,17 @@ int main(int argc, char* argv[]) {
 	parse_server_file(servers_filename);
 	parse_LSAs_file(LSAs);
 	build_routing_table(round_robin);
-	print_routing_table();
-	print_topo();
+	// print_routing_table();
+	// print_topo();
 	open_log_file(log_filename);
-
 	struct packet* temp_packet = make_query_packet("video.cs.cmu.edu");
 	int temp_length;
 	serialize(temp_packet, reference_packet, &reference_packet_length);
-	printf("Reference packet length: %d\n", reference_packet_length);
-
+	// printf("Reference packet length: %d\n", reference_packet_length);
+	// printf("Printing reference_packet..........................\n");
+	// print_packet(temp_packet);
+	// print_serialized_packet(reference_packet, reference_packet_length);
+	// printf("End printing reference_packet..........................\n");
 	int ready_number = -1;
 	while(1){
 		ready_read_set = read_set;
@@ -93,6 +95,13 @@ int main(int argc, char* argv[]) {
 				char addr[INET_ADDRSTRLEN];
 				inet_ntop(AF_INET, &(from.sin_addr), addr, INET_ADDRSTRLEN);
 				printf("client address: %s\n", addr);
+				// print_serialized_packet(buffer, ret);
+				int jj;
+				for(jj=0;jj<reference_packet_length-sizeof(uint16_t);jj++){
+					if(memcmp(buffer+sizeof(uint16_t)+jj, reference_packet+sizeof(uint16_t)+jj, 1)!=0){
+						printf("differ: %d, %c, %c\n", jj, (char*)(buffer+sizeof(uint16_t)+jj), (char*)(reference_packet+sizeof(uint16_t)+jj));
+					}
+				}
 				if(memcmp(buffer+sizeof(uint16_t), reference_packet+sizeof(uint16_t), reference_packet_length-sizeof(uint16_t))==0){
 					// generate response
 					printf("correct dns\n");
@@ -103,6 +112,7 @@ int main(int argc, char* argv[]) {
 						char* response = make_response_packet(buffer, response_ip, &response_length);
 						dns_log(addr, "video.cs.cmu.edu", response_ip);
 						sendto(socket, response, response_length, 0, (struct sockaddr *)&from, from_length);
+						// print_serialized_packet(response, response_length);
 						free(response);
 					}
 					else{
@@ -110,6 +120,7 @@ int main(int argc, char* argv[]) {
 						int response_length;
 						char* response = make_error_response_packet(buffer, &response_length);
 						sendto(socket, response, response_length, 0, (struct sockaddr *)&from, from_length);
+						// print_serialized_packet(response, response_length);
 						free(response);
 					}
 				}
@@ -119,7 +130,7 @@ int main(int argc, char* argv[]) {
 					int response_length = -1;
 					char* response = make_error_response_packet(buffer, &response_length);
 					sendto(socket, response, response_length, 0, (struct sockaddr *)&from, from_length);
-					print_serialized_packet(response);
+					print_serialized_packet(response, response_length);
 					free(response);
 				}
 			}
