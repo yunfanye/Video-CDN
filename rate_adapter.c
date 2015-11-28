@@ -137,7 +137,8 @@ int estimate_tp(unsigned long start_time, unsigned transmitted_size,
 	float duration = end_time - start_time; /* us */
 	unsigned now_put;
 	ave_put = get_server_bitrate(server_ip);
-	now_put = (double)transmitted_size * 1000.0/ (double)duration;/* kbps */
+	/* size (Byte * (1000 us/ms) * (8 bits/Byte) / us) kbps */
+	now_put = (double)transmitted_size * 1000.0 * 8.0/ (double)duration;
 	/* estimate */
 	ave_put = alpha * now_put + (1.0 - alpha) * ave_put;
 	set_server_bitrate(server_ip, ave_put);
