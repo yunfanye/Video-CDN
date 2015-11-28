@@ -400,9 +400,9 @@ int parse_command_line(int argc, char * argv[]) {
 	dns_port = atoi(argv[6]);
 
 	log_init(log_filename);
-	init_mydns(dns_ip, dns_port);
 	mHTTP_init(listen_port);
 	conn_init(fake_ip, www_ip);
+	init_mydns(dns_ip, dns_port, fake_ip);
 	adapter_init(alpha);
 	return 0;
 }

@@ -15,6 +15,7 @@
 #include <arpa/inet.h>
 #include <string.h>
 #include "util.h"
+#include "conn_handler.h"
 
 // Global variables used by DNS servers
 int dns_socket;
@@ -30,8 +31,8 @@ struct sockaddr_in dns_server_addr;
  *
  * @return 0 on success, -1 otherwise
  */
-int init_mydns(const char *dns_ip, unsigned int dns_port);
-
+// int init_mydns(const char *dns_ip, unsigned int dns_port);
+int init_mydns(const char *dns_ip, unsigned int dns_port, char *www_ip_addr);
 
 /**
  * Resolve a DNS name using your custom DNS server.

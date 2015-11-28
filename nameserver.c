@@ -94,7 +94,7 @@ int main(int argc, char* argv[]) {
 			}else{
 				char addr[INET_ADDRSTRLEN];
 				inet_ntop(AF_INET, &(from.sin_addr), addr, INET_ADDRSTRLEN);
-				printf("client address: %s\n", addr);
+				// printf("client address: %s\n", addr);
 				// print_serialized_packet(buffer, ret);
 				// int jj;
 				// for(jj=0;jj<reference_packet_length-sizeof(uint16_t);jj++){
@@ -104,10 +104,10 @@ int main(int argc, char* argv[]) {
 				// }
 				if(memcmp(buffer+sizeof(uint16_t), reference_packet+sizeof(uint16_t), reference_packet_length-sizeof(uint16_t))==0){
 					// generate response
-					printf("correct dns\n");
+					// printf("correct dns\n");
 					char* response_ip = best_server(addr, round_robin);
 					if(response_ip!=NULL){
-						printf("find best server: %s\n", response_ip);
+						// printf("find best server: %s\n", response_ip);
 						int response_length = -1;
 						char* response = make_response_packet(buffer, response_ip, &response_length);
 						dns_log(addr, "video.cs.cmu.edu", response_ip);
@@ -130,7 +130,7 @@ int main(int argc, char* argv[]) {
 					int response_length = -1;
 					char* response = make_error_response_packet(buffer, &response_length);
 					sendto(socket, response, response_length, 0, (struct sockaddr *)&from, from_length);
-					print_serialized_packet(response, response_length);
+					// print_serialized_packet(response, response_length);
 					free(response);
 				}
 			}

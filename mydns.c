@@ -1,7 +1,14 @@
 #include "mydns.h"
 
 
-int init_mydns(const char *dns_ip, unsigned int dns_port){
+int init_mydns(const char *dns_ip, unsigned int dns_port, char* fake_ip){
+	struct sockaddr_in myaddr;
+	bzero(&myaddr, sizeof(myaddr));
+	myaddr.sin_family = AF_INET;
+	//myaddr.sin_addr.s_addr = htonl(INADDR_ANY);
+	inet_pton(AF_INET, fake_ip, &(myaddr.sin_addr));
+	myaddr.sin_port = htons(0);
+
 	dns_socket = socket(AF_INET, SOCK_DGRAM, IPPROTO_IP);
 	if(dns_socket<0){
 		printf("Init DNS failed!\n");
@@ -14,12 +21,14 @@ int init_mydns(const char *dns_ip, unsigned int dns_port){
         printf("setsockopt failed!\n");
         return -1;
     }
-	int ret = bind(dns_socket, (struct sockaddr*)(&dns_server_addr), sizeof(dns_server_addr));
+    printf("fake_ip: %s\n", fake_ip);
+	int ret = bind(dns_socket, (struct sockaddr*)(&myaddr), sizeof(myaddr));
 	if(ret<0){
 		printf("DNS bind failed!\n");
 		return -1;
 	}
 
+	memset((char*)&(dns_server_addr), 0, sizeof(dns_server_addr));
 	dns_server_addr.sin_family = AF_INET;
 	inet_pton(AF_INET, dns_ip, &(dns_server_addr.sin_addr));
 	dns_server_addr.sin_port = htons(dns_port);
@@ -45,7 +54,11 @@ int resolve(const char *node, const char *service, const struct addrinfo *hints,
 		free_packet(packet);
 		return -1;
 	}
-	int RCODE = parse_response(buffer, res, length);
+	int RCODE = parse_response(data, buffer, res, length);
+	if(RCODE==-1){
+		free_packet(packet);
+		return -1;
+	}
 	((struct sockaddr_in*)(*res)->ai_addr)->sin_port = htons(atoi(service));
 	free_packet(packet);
 	if(RCODE!=0){

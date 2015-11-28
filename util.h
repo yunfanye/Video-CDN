@@ -68,7 +68,8 @@ struct packet* make_query_packet(const char* node);
 void make_addrinfo(struct addrinfo** res);
 void print_packet(struct packet* packet);
 void print_serialized_packet(char* packet, int packet_length);
-int parse_response(char* response, struct addrinfo **res, int packet_length);
+// int parse_response(char* response, struct addrinfo **res, int packet_length);
+int parse_response(char* request, char* response, struct addrinfo **res, int packet_length);
 void convertName(char* name, const char* const_src);
 
 #endif

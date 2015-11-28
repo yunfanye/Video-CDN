@@ -11,14 +11,13 @@
 #include "time_util.h"
 #include "proxy_log.h"
 
-static bool use_dns;
-static in_addr_t www_ip_addr;
-static in_addr_t fake_ip_addr;
-
 /*function prototypes */
 int server_conn(int cliendfd, char * server_ip);
 int clientfd_open();
 
+static bool use_dns;
+static in_addr_t www_ip_addr;
+static in_addr_t fake_ip_addr;
 
 int conn_init(const char* fake_ip, const char * www_ip) {
 	use_dns = www_ip == NULL;
@@ -50,12 +49,18 @@ int server_conn(int clientfd, char * server_ip) {
 	char * ip_str;
 	if(use_dns) {
 		rc = resolve("video.cs.cmu.edu", "8080", NULL, &result);
+		struct sockaddr_in *ipv4 = (struct sockaddr_in*)result->ai_addr;
+		char ipAddress[INET_ADDRSTRLEN];
+		inet_ntop(AF_INET, &(ipv4->sin_addr), ipAddress, INET_ADDRSTRLEN);
+		// printf("return code: %d, The IP address is: %s\n", rc, ipAddress;
 		if (rc != 0)
 			log_error("Resolve dns error!");
-		if (connect(clientfd, result -> ai_addr, result -> ai_addrlen) != -1)
+		if (connect(clientfd, result -> ai_addr, result -> ai_addrlen) != -1){
             log_error("Failed connecting to web server!");
+		}
 		ip_str = inet_ntoa(
 			((struct sockaddr_in *)(result -> ai_addr)) -> sin_addr);
+		printf("%s\n", ip_str);
 		free(result);
 	}
 	else {

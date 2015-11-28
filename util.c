@@ -214,14 +214,22 @@ void print_serialized_packet(char* packet, int packet_length){
 }
 
 // TODO: need to debug here to find the right place of IP
-int parse_response(char* response, struct addrinfo **res, int packet_length){
+int parse_response(char* request, char* response, struct addrinfo **res, int packet_length){
 	print_serialized_packet(response, packet_length);
+	struct header* header = (struct header*)request;
+	header->ANCOUNT = htons(1);
+	header->QR = 1;
+	header->AA = 1;
+	if(memcmp(request, response, packet_length)!=0){
+		printf("Parse response Error\n");
+		return -1;
+	}
 	char* QNAME = (char*)(response + sizeof(struct header));
 	int offest = packet_length + strlen(QNAME)+1;
-	// printf("parse response: %s, %d\n", QNAME, offest);
+	printf("parse response: %s, %d\n", QNAME, offest);
 	char* ip = response + offest + sizeof(uint16_t)*5;
-	// printf("%d\n", ntohl(*(uint32_t*)ip));
-	((struct sockaddr_in*)(*res)->ai_addr)->sin_addr.s_addr = ntohl(*(uint32_t*)ip);
+	printf("%d\n", ntohl(*(uint32_t*)ip));
+	((struct sockaddr_in*)(*res)->ai_addr)->sin_addr.s_addr = (*(uint32_t*)ip);
 	int RCODE = ntohl(((struct header*)response)->RCODE);
 	return RCODE;
 }
